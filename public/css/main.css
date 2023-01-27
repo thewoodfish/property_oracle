@@ -1,0 +1,9 @@
+body {
+    background-color: azure;
+}
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    color: var(--bs-nav-tabs-link-active-color);
+    background-color: azure;
+    border-color: var(--bs-nav-tabs-link-active-border-color);
+}
