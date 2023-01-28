@@ -30,6 +30,13 @@ function generateRandomNumber() {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function toast(msg) {
+    const toastLiveExample = document.getElementById('liveToast');
+    const toast = new bootstrap.Toast(toastLiveExample);
+    qs('.toast-body').innerHTML = msg;
+    toast.show();
+}
+
 // to prevent duplicate additiom of values
 let ptype_buffer = ["address of property", "size of property"];
 
@@ -54,18 +61,46 @@ document.body.addEventListener(
             console.log(e);
             let attrElement = qs(`.xy-${e.classList[0].split('-')[1]}`);
             attrElement.parentElement.removeChild(attrElement);
-        } else if (e.classList.contains("reg-property")) {
-            if (ptype_buffer.length) {
-                appear(".add-attr-spinner");
+        } else if (e.classList.contains("reg-property-before")) {
+            if (ptype_buffer.length > 2) {
+                hide(".reg-property-before");
+                appear(".reg-property-after");
 
-                // send request to chain
-                fetch("/register-ptype", {
+                // // send request to chain
+                // fetch("/register-ptype", {
+                //     method: 'post',
+                //     headers: {
+                //         'Content-Type': 'application/json'
+                //     },
+                //     body: JSON.stringify({
+                //         "attributes": ptype_buffer.join(`~`)
+                //     })
+                // })
+                //     .then(res => {
+                //         (async function () {
+                //             await res.json().then(res => {
+                //                 console.log(res);
+                //             });
+                //         })();
+                //     })
+            } else {
+                toast(`You need to specify more attributes`);
+            }
+        } else if (e.classList.contains("gen-mnemonics-before")) {
+            const name = qs(".pseudo-name").value;
+            if (name) {
+                hide(".gen-mnemonics-before");
+                appear(".gen-mnemonics-after");
+                clearField(".pseudo-name");
+
+                // send to server
+                fetch("/new-user", {
                     method: 'post',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        "attributes": ptype_buffer.join(`~`)
+                        name
                     })
                 })
                     .then(res => {
@@ -75,6 +110,8 @@ document.body.addEventListener(
                             });
                         })();
                     })
+            } else {
+                toast(`Please fill in you name to continue`);
             }
         }
     },

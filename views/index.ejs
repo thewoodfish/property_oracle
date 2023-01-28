@@ -11,120 +11,240 @@
 </head>
 
 <body>
-    <!-- Follow these instructions, please! -->
-    <div class="container py-5">
-        <h1 class="h2">Property Oracle</h1>
-        <p>
-            Property Oracle is a blockchain solution built on
-            <a href="https://substrate.io">substrate</a> and <a href="https://kilt.io">kilt</a> that helps people
-            possess
-            undisputed claims and accesses to their various properties.
-        </p>
-        <p>
-            Once you're ready, let's make sure that property of yours stays yours.
-        </p>
-        <p>Thanks! <span class="text-danger">♥</span></p>
-    </div>
-
     <div class="container">
-        <nav>
-            <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home"
-                    type="button" role="tab" aria-controls="nav-home" aria-selected="true">
-                    Search for property
-                </button>
-                <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile"
-                    type="button" role="tab" aria-controls="nav-profile" aria-selected="false">
-                    Register a property
-                </button>
-                <button class="nav-link" id="nav-transfer" data-bs-toggle="tab" data-bs-target="#nav-disabled"
-                    type="button" role="tab" aria-controls="nav-transfer" aria-selected="false">
-                    Transfer a property
-                </button>
-                <button class="nav-link" id="nav-contact-tab" data-bs-toggle="tab" data-bs-target="#nav-contact"
-                    type="button" role="tab" aria-controls="nav-contact" aria-selected="false">
-                    Create property type
-                </button>
-                <button class="nav-link" id="nav-sign-tab" data-bs-toggle="tab" data-bs-target="#nav-disabled"
-                    type="button" role="tab" aria-controls="nav-sign" aria-selected="false">
-                    Enforce property claim
-                </button>
-                <button class="nav-link" id="nav-sign-tab" data-bs-toggle="tab" data-bs-target="#nav-disabled"
-                    type="button" role="tab" aria-controls="nav-sign" aria-selected="false">
-                    List my properties
-                </button>
-            </div>
-        </nav>
-        <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab"
-                tabindex="0">
-                ...
-            </div>
-            <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab" tabindex="0">
-                ...
-            </div>
-            <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab" tabindex="0">
-                <div class="pt-10">
-                    <div class="card">
-                        <div class="card-body">
-                            <div>
-                                <div class="alert alert-success ptype-reg-success hidden" role="alert">
-                                    A simple success alert—check it out!
+        <div class="row">
+            <div class="py-5 col-9">
+                <div>
+                    <h1 class="h2">🏡 Property Oracle</h1>
+                    <p>
+                        Property Oracle is a blockchain solution built on
+                        <a href="https://substrate.io">substrate</a> and <a href="https://kilt.io">kilt</a> that helps
+                        people
+                        possess
+                        undisputed claims and accesses to their various properties.
+                    </p>
+                    <p>
+                        Once you're ready, let's make sure that property of yours stays yours.
+                    </p>
+                    <p>Thanks! <span class="text-danger">♥</span></p>
+                </div>
+                <div class="container">
+                    <nav>
+                        <div class="nav nav-tabs small" id="nav-tab" role="tablist">
+                            <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab"
+                                data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home"
+                                aria-selected="true">
+                                Search for property
+                            </button>
+                            <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab"
+                                data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile"
+                                aria-selected="false">
+                                Register property
+                            </button>
+                            <button class="nav-link" id="nav-transfer" data-bs-toggle="tab"
+                                data-bs-target="#nav-disabled" type="button" role="tab" aria-controls="nav-transfer"
+                                aria-selected="false">
+                                Transfer property
+                            </button>
+                            <button class="nav-link" id="nav-contact-tab" data-bs-toggle="tab"
+                                data-bs-target="#nav-contact" type="button" role="tab" aria-controls="nav-contact"
+                                aria-selected="false">
+                                Create property type
+                            </button>
+                            <button class="nav-link" id="nav-sign-tab" data-bs-toggle="tab"
+                                data-bs-target="#nav-disabled" type="button" role="tab" aria-controls="nav-sign"
+                                aria-selected="false">
+                                Enforce property claim
+                            </button>
+                            <button class="nav-link" id="nav-keys-tab" data-bs-toggle="tab" data-bs-target="#nav-keys"
+                                type="button" role="tab" aria-controls="nav-keys" aria-selected="false">
+                                Get keys
+                            </button>
+                        </div>
+                    </nav>
+                    <div class="tab-content" id="nav-tabContent">
+                        <div class="tab-pane fade show active" id="nav-home" role="tabpanel"
+                            aria-labelledby="nav-home-tab" tabindex="0">
+                            ...
+                        </div>
+                        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab"
+                            tabindex="0">
+                            ...
+                        </div>
+                        <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab"
+                            tabindex="0">
+                            <div class="pt-10">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div>
+                                            <div class="alert alert-success ptype-reg-success hidden" role="alert">
+                                                A simple success alert—check it out!
+                                            </div>
+                                            <p>
+                                                Properties differ and only you know what requirements and
+                                                attributes must be present for a property to be claimed,
+                                                registered or allotted.
+                                            </p>
+                                        </div>
+                                        <code>Kindly include all the required attributes below!</code>
+                                        <div class="pt-10">
+                                            <form class="row g-3">
+                                                <div class="col-auto">
+                                                    <!-- <label for="attr" class="visually-hidden">attr</label> -->
+                                                    <input type="test" class="form-control attr-field"
+                                                        placeholder="attribute">
+                                                </div>
+                                                <div class="col-auto">
+                                                    <button class="btn btn-primary mb-3 add-attr"
+                                                        onclick="return false">Add</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="pt-10 attr-display">
+                                            <p><code>- Address of property </code></p>
+                                            <p><code>- Size of property </code></p>
+                                        </div>
+                                        <div class="pt-10">
+                                            <button type="button"
+                                                class="btn btn-primary btn reg-property-before">Register
+                                                Property Type</button>
+                                            <button class="btn btn-primary reg-property-after hidden" type="button"
+                                                disabled>
+                                                <span class="spinner-border spinner-border-sm" role="status"
+                                                    aria-hidden="true"></span>
+                                                Registering...
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p>
-                                    Properties differ and only you know what requirements and
-                                    attributes must be present for a property to be claimed,
-                                    registered or allotted.
-                                </p>
                             </div>
-                            <code>Kindly include all the required attributes below!</code>
+                        </div>
+                        <div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab"
+                            tabindex="0">
+                            ...
+                        </div>
+                        <div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab"
+                            tabindex="0">
+                            ...
+                        </div>
+                        <div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab"
+                            tabindex="0">
+                            ...
+                        </div>
+                        <div class="tab-pane fade" id="nav-keys" role="tabpanel" aria-labelledby="nav-keys-tab"
+                            tabindex="0">
                             <div class="pt-10">
-                                <form class="row g-3">
-                                    <div class="col-auto">
-                                        <!-- <label for="attr" class="visually-hidden">attr</label> -->
-                                        <input type="test" class="form-control attr-field" placeholder="attribute">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div>
+                                            <div class="alert alert-success keys-gen-success hidden" role="alert">
+                                                A simple success alert—check it out!
+                                            </div>
+                                            <p>
+                                                Mnemonics helps to authenticate and perform many operations on
+                                                <code>Property Oracle</code>. Each is unique per individual. Please keep
+                                                them very save and private!
+                                            </p>
+                                        </div>
+                                        <code>Synthesize your mnemonics below:</code>
+                                        <div class="pt-10">
+                                            <form class="row g-3">
+                                                <div class="col-auto width-50">
+                                                    <!-- <label for="attr" class="visually-hidden">attr</label> -->
+                                                    <input type="test" class="form-control pseudo-name"
+                                                        placeholder="your name or pseudo-name e.g woodfish">
+                                                </div>
+                                                <div class="col-auto">
+                                                    <button class="btn btn-primary mb-3 gen-mnemonics-before"
+                                                        onclick="return false">Generate mnemonic</button>
+                                                    <button class="btn btn-primary gen-mnemonics-after hidden"
+                                                        type="button" disabled>
+                                                        <span class="spinner-border spinner-border-sm" role="status"
+                                                            aria-hidden="true"></span>
+                                                        Generating...
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="mnemonics-container hidden">
+                                            <div class="card">
+                                                <div class="card-body fs-80">
+                                                    This is your mnemonic:
+                                                    <div class="mnemonics bold"></div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-auto">
-                                        <button class="btn btn-primary mb-3 add-attr"
-                                            onclick="return false">Add</button>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="pt-10 attr-display">
-                                <p><code>- Address of property </code></p>
-                                <p><code>- Size of property </code></p>
-                            </div>
-                            <div class="pt-10">
-                                <button type="button" class="btn btn-primary btn reg-property">Register Property Type</button>
-                                <div class="spinner-border text-secondary add-attr-spinner ml-10 hidden" role="status">
-                                    <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <!--                     
-                    <div class="row mb-3 pt-10">
-                        <label for="colFormLabel" class="col-sm-2 col-form-label">Email</label>
-                        <div class="col-sm-10">
-                          <input type="email" class="form-control" id="colFormLabel" placeholder="col-form-label"> 
-                        </div>
-                      </div> -->
                 </div>
+
             </div>
-            <div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab"
-                tabindex="0">
-                ...
-            </div>
-            <div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab"
-                tabindex="0">
-                ...
-            </div>
-            <div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab"
-                tabindex="0">
-                ...
+            <div class="config mt-30 col-3">
+                <div>
+                    <div class="card" style="width: 18rem;">
+                        <div class=" pl-10">
+                            <p class="chain-connected hidden ml-10"><span class="cfg-connect fs-80"><span
+                                        class="fs-120 pr-10">📶</span>Connected</span></p>
+                            <p class="chain-connecting">
+                            <div class="cfg-connect fs-80 ml-10">
+                                <div class="spinner-border spinner-border-sm" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                Connecting...
+                            </div>
+                            </p>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <div class="iflex">
+                                    <div class="profile-picture">
+                                        <img src="img/penguin.png" alt="Profile Picture">
+                                    </div>
+                                    <ul class="list-group list-group-flush fs-80 ml-10">
+                                        <li class="list-group-item">Woodfish <a class="right pointer sign-in-prompt"
+                                                data-bs-toggle="collapse" href="#signInUser" role="button"
+                                                aria-expanded="false" aria-controls="signInUser">
+                                                Sign In
+                                            </a></li>
+                                        <li class="list-group-item">0xdhsjsiuhd87adan7iayihca...</li>
+                                        <li class="list-group-item p-0">
+                                            <div class="pt-10">
+                                                <div class="collapse" id="signInUser">
+                                                    <textarea class="form-control fs-80"
+                                                        id="exampleFormControlTextarea1" rows="3"
+                                                        placeholder="Enter your seed phrase"></textarea>
+                                                    <input class="btn btn-primary btn-sm mt-10 sign-in-btn"
+                                                        type="button" value="Sign in">
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- toast  -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <span class="mr-10 fs-150">🏡</span>
+                <strong class="me-auto">Property Oracle</strong>
+                <small>Now</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+    <!-- footer  -->
     <div class="copy-right mt-10 center">
         <code>Copyright (c) Algorealm 2023. All rights reserved</code>
     </div>

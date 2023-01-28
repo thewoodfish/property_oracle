@@ -17,9 +17,14 @@ app.get('', (req, res) => {
     res.render('index', { text: 'This is sparta' });
 });
 
-app.get('/about', (req, res) => {
-    res.render('about', { text: 'Eragon and the dragon' });
+app.get('/new-user', (req, res) => {
+    createNewUser(req.body, res);
 });
+
+// handler functions
+async function createNewUser(req, res) {
+
+}
 
 
 // listen on port 3000

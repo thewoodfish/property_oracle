@@ -22,7 +22,11 @@ body {
 }
 
 .pl-10 {
-    padding-left: 10px;
+    padding-left: 10px !important;
+}
+
+.pr-10 {
+    padding-right: 10px !important;
 }
 
 .ml-10 {
@@ -51,4 +55,94 @@ body {
 
 .center {
     margin: 0 auto;
+}
+
+.ml-15 {
+    margin-left: 15px;
+}
+
+.mr-15 {
+    margin-right: 15px;
+}
+
+.ml-10 {
+    margin-left: 10px;
+}
+
+.mr-10 {
+    margin-right: 10px;
+}
+
+.fs-150 {
+    font-size: 150%;
+}
+
+.bold {
+    font-weight: 700;
+}
+
+.config {
+    display: flex;
+    justify-content: flex-end;
+}
+
+
+.right {
+    float: right;
+}
+
+.mt-30 {
+    margin-top: 30px;
+}
+
+.p-0 {
+    padding: 0px !important;
+}
+
+/* .cfg-connect {
+    color: grey;
+    background: white;
+    padding: 5px;
+    border: 1px solid grey;
+    border-radius: 15px;
+} */
+
+.fs-80 {
+    font-size: 80%;
+}
+
+.fs-120 {
+    font-size: 120%;
+}
+
+.pt-5 {
+    padding-top: 5px !important;
+}
+
+.profile-picture {
+    width: 30px;
+    /* width of the profile picture */
+    height: 30px;
+    /* height of the profile picture */
+    border-radius: 50%;
+    /* makes the profile picture round */
+    overflow: hidden;
+    /* hides any overflow */
+}
+
+.profile-picture img {
+    width: 100%;
+    /* makes the image fill the entire .profile-picture div */
+}
+
+.grey {
+    color: gray !important;
+}
+
+.iflex {
+    display: inline-flex;
+}
+
+.width-50 {
+    width: 50% !important;
 }
