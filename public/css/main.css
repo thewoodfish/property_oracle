@@ -120,14 +120,16 @@ body {
 }
 
 .profile-picture {
-    width: 30px;
+    width: 40px;
     /* width of the profile picture */
-    height: 30px;
+    height: 40px;
     /* height of the profile picture */
     border-radius: 50%;
     /* makes the profile picture round */
     overflow: hidden;
     /* hides any overflow */
+    position: relative;
+    top: 10px;
 }
 
 .profile-picture img {
@@ -145,4 +147,35 @@ body {
 
 .width-50 {
     width: 50% !important;
+}
+
+.m-t-5 {
+    margin-top: 5px;
+}
+
+.beta-mark {
+    font-weight: 200;
+    font-size: medium;
+    position: relative;
+    top: -10px;
+}
+
+#nav-tab {
+    background: #fff !important; 
+    border: 1px solid lightgrey !important;
+}
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+    color: #000;
+    background-color: #fbfbfb;
+    border-radius: 0px;
+}
+
+.pl-0 {
+    padding-left: 0px !important;
+}
+
+.nav-tabs .nav-link:focus, .nav-tabs .nav-link:hover {
+    border-radius: 0px;
+    background: #fbfbfb;
 }
