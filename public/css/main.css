@@ -169,6 +169,7 @@ body {
     color: #000;
     background-color: #fbfbfb;
     border-radius: 0px;
+    border-top: 0 !important;
 }
 
 .pl-0 {
@@ -178,4 +179,17 @@ body {
 .nav-tabs .nav-link:focus, .nav-tabs .nav-link:hover {
     border-radius: 0px;
     background: #fbfbfb;
+}
+
+.pt-0 {
+    padding-top: 0 !important;
+}
+
+.alert-div {
+    background: #e3fff2;
+    border: 1px solid #e9eee8;
+}
+
+.pr-0 {
+    padding-right: 0 !important;
 }

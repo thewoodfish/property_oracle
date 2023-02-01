@@ -5,7 +5,8 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
     <link rel="stylesheet" href="css/main.css" />
     <title>Property Oracle</title>
 </head>
@@ -167,10 +168,19 @@
                                             </form>
                                         </div>
                                         <div class="mnemonics-container hidden">
-                                            <div class="card">
+                                            <div class="card alert-div">
                                                 <div class="card-body fs-80">
                                                     This is your mnemonic:
-                                                    <div class="mnemonics bold"></div>
+                                                    <div class="mnemonics bold">
+                                                        <code class="mnemonic-seed">
+                                                        </code>
+                                                    </div>
+                                                </div>
+                                                <div class="card-body fs-80 pt-0">
+                                                    This is your <a href="wiki.com">DID</a>:
+                                                    <div class="mnemonics bold">
+                                                        <code class="kilt-did-result"></code>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -206,20 +216,30 @@
                                         <img src="img/woodfish.jpeg" alt="Profile Picture">
                                     </div>
                                     <ul class="list-group list-group-flush fs-80 ml-10">
-                                        <li class="list-group-item">Woodfish <a class="right pointer sign-in-prompt"
-                                                data-bs-toggle="collapse" href="#signInUser" role="button"
-                                                aria-expanded="false" aria-controls="signInUser">
+                                        <li class="pl-0 list-group-item pr-0"><code
+                                                class="signed-in-user-name">Woodfish</code> <a
+                                                class="right pointer sign-in-prompt" data-bs-toggle="collapse"
+                                                href="#signInUser" role="button" aria-expanded="false"
+                                                aria-controls="signInUser">
                                                 Sign In
                                             </a></li>
-                                        <li class="list-group-item">kilt:did:4bssksjsiuhd87asd3...</li>
+                                        <li class="pl-0 list-group-item pr-0"><code
+                                                class="signed-in-user-did">kilt:did:4xxxxxxxxxxxxxxxxx...</code>
+                                        </li>
                                         <li class="list-group-item p-0">
                                             <div class="pt-10">
                                                 <div class="collapse" id="signInUser">
-                                                    <textarea class="form-control fs-80"
+                                                    <textarea class="form-control fs-80 seed-phrase-ta"
                                                         id="exampleFormControlTextarea1" rows="3"
-                                                        placeholder="Enter your seed phrase"></textarea>
-                                                    <input class="btn btn-primary btn-sm mt-10 sign-in-btn"
+                                                        placeholder="Enter your seed phrase..."></textarea>
+                                                    <input class="btn btn-primary btn-sm mt-10 sign-in-btn-before"
                                                         type="button" value="Sign in">
+                                                    <button class="btn btn-sm mt-10 btn-primary sign-in-btn-after hidden"
+                                                        type="button" disabled>
+                                                        <span class="spinner-border spinner-border-sm" role="status"
+                                                            aria-hidden="true"></span>
+                                                        loading...
+                                                    </button>
                                                 </div>
                                             </div>
                                         </li>
@@ -252,12 +272,14 @@
     </div>
 
     <!-- important JS files  -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/@kiltprotocol/sdk-js@dev/dist/sdk-js.min.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+        crossorigin="anonymous"></script>
+    <!-- <script src="https://unpkg.com/@kiltprotocol/sdk-js@dev/dist/sdk-js.min.umd.js"></script>
     <script src="https://unpkg.com/@polkadot/util/bundle-polkadot-util.js"></script>
     <script src="https://unpkg.com/@polkadot/util-crypto/bundle-polkadot-util-crypto.js"></script>
     <script src="https://unpkg.com/@polkadot/types/bundle-polkadot-types.js"></script>
-    <script src="https://unpkg.com/@polkadot/api/bundle-polkadot-api.js"></script>
+    <script src="https://unpkg.com/@polkadot/api/bundle-polkadot-api.js"></script> -->
     <script src="js/main.js"></script>
 </body>
 

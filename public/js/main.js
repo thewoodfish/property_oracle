@@ -16,6 +16,10 @@ function clearField(attr) {
     qs(attr).value = "";
 }
 
+function getFirstName(name) {
+    return name.split(" ")[0];
+}
+
 function appear(attr) {
     qs(attr).classList.remove("hidden");
 }
@@ -30,6 +34,49 @@ function generateRandomNumber() {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+async function queryServerToSignIn(seed, rollup) {
+    // send request to chain
+    fetch("/sign-in", {
+        method: 'post',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            "keys": seed    // can be seed or nonce
+        })
+    })
+        .then(res => {
+            (async function () {
+                await res.json().then(res => {
+                    if (!res.error) {
+                        clearField(".seed-phrase-ta");
+                        setSessionNonce(res.data.nonce);
+                        updateAuthUser(res.data.did, res.data.name);
+                        hide(".sign-in-btn-after");
+                        appear(".sign-in-btn-before");
+                        toast(`Hey <code>${getFirstName(res.data.name)}</code>, Welcome to <code>Property Oracle</code>`);
+
+                        // roll up the card
+                        if (rollup) click(".sign-in-prompt");
+                    } else {
+                        toast("Could not sign you in. Please check your seed.");
+                        hide(".sign-in-btn-after");
+                        appear(".sign-in-btn-before");
+                    }
+                });
+            })()
+        })
+}
+
+// check if a user has been authenticated successfully
+function userIsAuth() {
+    if (qs(".signed-in-user-did").innerText.indexOf("xxxxx") == -1) return true;
+    else {
+        toast("You need to be authenticated to perform this function");
+        return false;
+    }
+}
+
 function toast(msg) {
     const toastLiveExample = document.getElementById('liveToast');
     const toast = new bootstrap.Toast(toastLiveExample);
@@ -40,6 +87,23 @@ function toast(msg) {
 function incConnectionCount() {
     let cc = qs(".connection-count");
     cc.innerText = cc.innerText ? parseInt(cc.innerText) + 1 : 1;
+}
+
+function truncate(str, end) {
+    return str.substr(0, end);
+}
+
+function updateAuthUser(did, name) {
+    qs(".signed-in-user-name").innerText = name.length > 20 ? `${truncate(name, 17)}...` : name;
+    qs(".signed-in-user-did").innerText = did.length > 30 ? `${truncate(did, 27)}...` : did;
+}
+
+function setSessionNonce(value) {
+    sessionStorage.setItem("session_nonce", value);
+}
+
+function getSessionNonce(value) {
+    return sessionStorage.getItem("session_nonce");
 }
 
 // initialize connection to Chain
@@ -57,7 +121,10 @@ async function initChainConnection(addr) {
         })
             .then(res => {
                 (async function () {
-                    await res.json().then(res => {
+                    await res.json().then(async res => {
+                        // if nonce is still present, sign user in automatically
+                        if (getSessionNonce())
+                            await queryServerToSignIn(getSessionNonce(), false);      // roll up the card
                         resolve(res.status);
                     });
                 })();
@@ -66,6 +133,10 @@ async function initChainConnection(addr) {
 
     console.log(result);
     return result;
+}
+
+function click(attr) {
+    qs(attr).click();
 }
 
 // to prevent duplicate additiom of values
@@ -109,26 +180,29 @@ document.body.addEventListener(
                 attrElement.parentElement.removeChild(attrElement);
             } else if (e.classList.contains("reg-property-before")) {
                 if (ptype_buffer.length > 2) {
-                    hide(".reg-property-before");
-                    appear(".reg-property-after");
+                    if (userIsAuth()) {
+                        hide(".reg-property-before");
+                        appear(".reg-property-after");
 
-                    // // send request to chain
-                    // fetch("/register-ptype", {
-                    //     method: 'post',
-                    //     headers: {
-                    //         'Content-Type': 'application/json'
-                    //     },
-                    //     body: JSON.stringify({
-                    //         "attributes": ptype_buffer.join(`~`)
-                    //     })
-                    // })
-                    //     .then(res => {
-                    //         (async function () {
-                    //             await res.json().then(res => {
-                    //                 console.log(res);
-                    //             });
-                    //         })();
-                    //     })
+                        // send request to chain
+                        fetch("/register-ptype", {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                "attributes": ptype_buffer.join(`~`),
+                                "nonce": getSessionNonce()
+                            })
+                        })
+                            .then(res => {
+                                (async function () {
+                                    await res.json().then(res => {
+                                        console.log(res);
+                                    });
+                                })();
+                            })
+                    }
                 } else {
                     toast(`You need to specify more attributes`);
                 }
@@ -137,7 +211,6 @@ document.body.addEventListener(
                 if (name) {
                     hide(".gen-mnemonics-before");
                     appear(".gen-mnemonics-after");
-                    clearField(".pseudo-name");
 
                     // send request to chain
                     fetch("/gen-keys", {
@@ -152,12 +225,39 @@ document.body.addEventListener(
                         .then(res => {
                             (async function () {
                                 await res.json().then(res => {
-                                    console.log(res);
+                                    const did = res.data.did.split(`:`, 4).join(`:`);
+
+                                    clearField(".pseudo-name");
+                                    hide(".gen-mnemonics-after");
+                                    appear(".gen-mnemonics-before");
+
+                                    appear(".mnemonics-container");
+                                    toast(`You have <code class="bold">10 seconds</code> to copy your keys`);
+
+                                    qs(".mnemonic-seed").innerText = res.data.seed;
+                                    qs(".kilt-did-result").innerText = did;
+                                    updateAuthUser(did, name);
+
+                                    // set session nonce
+                                    setSessionNonce(res.data.nonce);
+
+                                    // set timeout to remove div
+                                    setTimeout(() => hide(".mnemonics-container"), 10000);
                                 });
                             })();
                         })
                 } else {
                     toast(`Please fill in you name to continue`);
+                }
+            } else if (e.classList.contains("sign-in-btn-before")) {
+                let seed = qs(".seed-phrase-ta").value;
+                if (seed.split(` `).length != 12)
+                    toast("seed phrases must be complete 12 words only.");
+                else {
+                    hide(".sign-in-btn-before");
+                    appear(".sign-in-btn-after");
+
+                    queryServerToSignIn(seed, true);
                 }
             }
         } else {

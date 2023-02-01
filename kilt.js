@@ -20,7 +20,7 @@ const keyring = new Keyring({ type: 'sr25519' });
 let api = undefined;
 let sam = undefined;
 
-cryptoWaitReady().then(() => {
+await cryptoWaitReady().then(() => {
     sam = keyring.createFromUri("yellow obscure salmon affair extra six bubble clutch fly bread away tired", 'sr25519');
 });
 
@@ -53,4 +53,93 @@ export async function getKiltLightDID(cid) {
     })
 
     return lightDID
+}
+
+export async function createFullDid() {
+    const mnemonic = mnemonicGenerate()
+    const { authentication, encryption, attestation, delegation } =
+    generateKeypairs(mnemonic);
+
+    // Get tx that will create the DID on chain and DID-URI that can be used to resolve the DID Document.
+    const fullDidCreationTx = await Kilt.Did.getStoreTx(
+    {
+        authentication: [authentication],
+        keyAgreement: [encryption],
+        assertionMethod: [attestation],
+        capabilityDelegation: [delegation],
+    },
+
+    sam.address,
+    async ({ data }) => ({
+        signature: authentication.sign(data),
+        keyType: authentication.type,
+    })
+    )
+
+    await Kilt.Blockchain.signAndSubmitTx(fullDidCreationTx, sam)
+
+    const didUri = Kilt.Did.getFullDidUriFromKey(authentication);
+    const encodedFullDid = await api.call.did.query(Kilt.Did.toChain(didUri));
+    const { document } = Kilt.Did.linkedInfoFromChain(encodedFullDid);
+
+    if (!document) {
+        throw 'Full DID was not successfully created.'
+    };
+
+    return { mnemonic, fullDid: document }
+}
+
+export function generateKeypairs(mnemonic = mnemonicGenerate()) {
+    const authentication = Kilt.Utils.Crypto.makeKeypairFromSeed(
+        mnemonicToMiniSecret(mnemonic)
+    )
+
+    const encryption = Kilt.Utils.Crypto.makeEncryptionKeypairFromSeed(
+        mnemonicToMiniSecret(mnemonic)
+    )
+
+    const attestation = authentication.derive('//attestation')
+
+    const delegation = authentication.derive('//delegation')
+
+    return {
+        authentication,
+        encryption,
+        attestation,
+        delegation,
+    }
+}
+
+
+export async function mintCType({ title, attr }, did_doc) {
+    // Create a new CType definition.
+    const ctObj = strToCT(attr);
+    const assert = keyring.createFromUri(did_doc.mnemonic, 'sr25519');
+    const { authentication, encryption, attestation, delegation } = generateKeypairs(did_doc.mnemonic);
+
+    // create signCallback
+    let signCallback = useSignCallback(did_doc.fullDid.uri, attestation);
+
+     // Create a new CType definition.
+    const ctype = Kilt.CType.fromProperties(title, ctObj);
+
+    // Generate a creation tx.
+    const ctypeCreationTx = api.tx.ctype.add(Kilt.CType.toChain(ctype));
+
+    // Sign it with the right DID key.
+    const authorizedCtypeCreationTx = await Kilt.Did.authorizeTx(
+        did_doc.fullDid.uri,
+        ctypeCreationTx,
+        signCallback,
+        sam.address
+    )
+
+    // Submit the creation tx to the KILT blockchain
+    // using the KILT account specified in the creation operation.
+    await Kilt.Blockchain.signAndSubmitTx(
+        authorizedCtypeCreationTx,
+        sam
+    );
+
+    return ctype;
 }
