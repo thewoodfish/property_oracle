@@ -4,8 +4,6 @@
  * Date-Time: Sat 28 Jan 02:51
  */
 
-import { title } from "process";
-
 function qs(tag) {
     return document.querySelector(tag);
 }
