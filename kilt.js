@@ -113,7 +113,7 @@ export function generateKeypairs(mnemonic = mnemonicGenerate()) {
 
 export async function mintCType({ title, attr }, did_doc) {
     // Create a new CType definition.
-    const ctObj = strToCT(attr);
+    const ctObj = util.strToCType(attr);
     const assert = keyring.createFromUri(did_doc.mnemonic, 'sr25519');
     const { authentication, encryption, attestation, delegation } = generateKeypairs(did_doc.mnemonic);
 
@@ -142,4 +142,21 @@ export async function mintCType({ title, attr }, did_doc) {
     );
 
     return ctype;
+}
+
+function useSignCallback(keyUri, didSigningKey) {
+    const signCallback = async ({
+        data,
+        // The key relationship specifies which DID key must be used.
+        keyRelationship,
+        // The DID URI specifies which DID must be used. We already know which DID
+        // this will be since we will use this callback just a few lines later (did === didUri).
+        did,
+    }) => ({
+        signature: didSigningKey.sign(data),
+        keyType: didSigningKey.type,
+        keyUri,
+    })
+  
+    return signCallback
 }

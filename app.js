@@ -122,6 +122,37 @@ async function createPropertyType(req, res) {
             })
         }
 
+        // now that we are sure that the user has a full did, we can create a KILT Ctype
+        let ptype = kilt.mintCType({ title: req.title, attr: req.attributes });
+
+        // we'll store it on IPFS and keep its cid
+        await storg.uploadToIPFS(JSON.stringify(JSON.stringify(ptype))).then(ptypeCid => {
+            // create hash of property title/label
+            let ptHash = blake2AsHex(req.title);
+
+            // record it on chain
+            (async function () {
+                const transfer = api.tx.oracle.recordPtype(ptHash, ptypeCid);
+                const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
+                    if (status.isInBlock) {
+                        events.forEach(({ event: { data, method, section }, phase }) => {
+                            // check for errors
+                            if (section.match("system", "i") && data.toString().indexOf("error") != -1)
+                                throw new Error("could not update DID")
+
+                            if (section.match("oracle", "i")) {
+                                // update the session data
+                                let data = oracleCache.get(req.nonce);
+                                data.fullDid = fullDidDoc;
+                                data.did = fullDidDoc.fullDid.uri;
+                                data.cid = cid;
+                            }
+                        })
+                    }
+                })
+            })()
+        });
+
 
     } else throw new Error("User not recognized!");
     // } catch (e) {clear

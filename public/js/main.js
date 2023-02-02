@@ -4,6 +4,8 @@
  * Date-Time: Sat 28 Jan 02:51
  */
 
+import { title } from "process";
+
 function qs(tag) {
     return document.querySelector(tag);
 }
@@ -177,6 +179,7 @@ document.body.addEventListener(
                 // delete specified attribute
                 console.log(e);
                 let attrElement = qs(`.xy-${e.classList[0].split('-')[1]}`);
+                let title = qs(".doc-title-field").value;
                 attrElement.parentElement.removeChild(attrElement);
             } else if (e.classList.contains("reg-property-before")) {
                 if (ptype_buffer.length > 2) {
@@ -192,6 +195,7 @@ document.body.addEventListener(
                             },
                             body: JSON.stringify({
                                 "attributes": ptype_buffer.join(`~`),
+                                title,
                                 "nonce": getSessionNonce()
                             })
                         })
