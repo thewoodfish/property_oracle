@@ -88,76 +88,94 @@ async function initChains(req) {
 }
 
 async function createPropertyType(req, res) {
-    // try {
-    const user = authUser(req.nonce);
-    if (user) {
-        // first make sure that the user has a full DID and not a light one
-        if (user.did.indexOf("light") != -1) {
-            // upgrade to full DID
-            let fullDidDoc = await kilt.createFullDid();
+    try {
+        const user = authUser(req.nonce);
+        if (user) {
+            // first make sure that the user has a full DID and not a light one
+            if (user.did.indexOf("light") != -1) {
+                // upgrade to full DID
+                let fullDidDoc = await kilt.createFullDid();
 
-            // upload to ipfs and get new cid
-            await storg.uploadToIPFS(JSON.stringify(JSON.stringify(fullDidDoc))).then(cid => {
-                // update cid
+                // upload to ipfs and get new cid
+                await storg.uploadToIPFS(JSON.stringify(JSON.stringify(fullDidDoc))).then(cid => {
+                    // update cid
+                    (async function () {
+                        const transfer = api.tx.oracle.recordUser(cid);
+                        const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
+                            if (status.isInBlock) {
+                                events.forEach(({ event: { data, method, section }, phase }) => {
+                                    // check for errors
+                                    if (section.match("system", "i") && data.toString().indexOf("error") != -1)
+                                        throw new Error("could not update DID")
+
+                                    if (section.match("oracle", "i")) {
+                                        // update the session data
+                                        let data = oracleCache.get(req.nonce);
+                                        data.fullDid = fullDidDoc;
+                                        data.did = fullDidDoc.fullDid.uri;
+                                        data.cid = cid;
+                                    }
+                                })
+                            }
+                        })
+                    })()
+                })
+            }
+
+            // now that we are sure that the user has a full did, we can create a KILT Ctype
+            let ptype = kilt.mintCType({ title: req.title, attr: req.attributes });
+
+            console.log(ptype);
+
+            // we'll store it on IPFS and keep its cid
+            await storg.uploadToIPFS(JSON.stringify(JSON.stringify(ptype))).then(ptypeCid => {
+                // create hash of property title/label
+                let ptHash = getUniquePtypeHash(req.title);
+
+                // record it on chain
                 (async function () {
-                    const transfer = api.tx.oracle.recordUser(cid);
+                    const transfer = api.tx.oracle.recordPtype(ptHash, ptypeCid);
                     const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
                         if (status.isInBlock) {
                             events.forEach(({ event: { data, method, section }, phase }) => {
                                 // check for errors
                                 if (section.match("system", "i") && data.toString().indexOf("error") != -1)
-                                    throw new Error("could not update DID")
+                                    throw new Error("could not record property type")
 
                                 if (section.match("oracle", "i")) {
-                                    // update the session data
-                                    let data = oracleCache.get(req.nonce);
-                                    data.fullDid = fullDidDoc;
-                                    data.did = fullDidDoc.fullDid.uri;
-                                    data.cid = cid;
+                                    // return success
+                                    return res.send({
+                                        data: {},
+                                        error: false
+                                    })
                                 }
                             })
                         }
                     })
                 })()
-            })
-        }
-
-        // now that we are sure that the user has a full did, we can create a KILT Ctype
-        let ptype = kilt.mintCType({ title: req.title, attr: req.attributes });
-
-        // we'll store it on IPFS and keep its cid
-        await storg.uploadToIPFS(JSON.stringify(JSON.stringify(ptype))).then(ptypeCid => {
-            // create hash of property title/label
-            let ptHash = blake2AsHex(req.title);
-
-            // record it on chain
-            (async function () {
-                const transfer = api.tx.oracle.recordPtype(ptHash, ptypeCid);
-                const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
-                    if (status.isInBlock) {
-                        events.forEach(({ event: { data, method, section }, phase }) => {
-                            // check for errors
-                            if (section.match("system", "i") && data.toString().indexOf("error") != -1)
-                                throw new Error("could not update DID")
-
-                            if (section.match("oracle", "i")) {
-                                // update the session data
-                                let data = oracleCache.get(req.nonce);
-                                data.fullDid = fullDidDoc;
-                                data.did = fullDidDoc.fullDid.uri;
-                                data.cid = cid;
-                            }
-                        })
-                    }
-                })
-            })()
-        });
+            });
 
 
-    } else throw new Error("User not recognized!");
-    // } catch (e) {clear
+        } else throw new Error("User not recognized!");
+    } catch (e) {
+        return res.send({
+            data: {},
+            error: true
+        })
+    }
+}
 
-    // }
+async function getUniquePtypeHash(title) {
+    // check if it already exists
+    let hash = blake2AsHex(title);
+    let data = (await api.query.oracle.propertyTypeRegistry(hash)).toHuman();
+
+    if (!data) {
+        title += ` ${util.generateRandomNumber()}`;
+        getUniquePtypeHash(title);
+    }
+
+    return hash;
 }
 
 // check keyring and test for equality

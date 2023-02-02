@@ -202,7 +202,8 @@ document.body.addEventListener(
                             .then(res => {
                                 (async function () {
                                     await res.json().then(res => {
-                                        console.log(res);
+                                        appear(".ptype-reg-success");
+                                        setTimeout(() => hide(".ptype-reg-success"), 5000);
                                     });
                                 })();
                             })
