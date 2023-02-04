@@ -1,7 +1,7 @@
 // config 
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
-import path from 'path';
+import path, { parse } from 'path';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,7 +31,6 @@ app.use(bodyParser.urlencoded({ extended: false }))
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { mnemonicGenerate, cryptoWaitReady, blake2AsHex, xxhashAsHex } from '@polkadot/util-crypto';
 const { Keyring } = require('@polkadot/keyring');
-const NodeCache = require("node-cache");  // for keeping session data
 
 // local imports
 import * as kilt from "./kilt.js";
@@ -43,7 +42,32 @@ let wsProvider = new WsProvider('ws://127.0.0.1:9944');
 let api = await ApiPromise.create({ provider: wsProvider });
 const keyring = new Keyring({ type: 'sr25519' });
 let alice = undefined;
-let oracleCache = new NodeCache();
+
+// a very simple session cache
+class SessionCache {
+    cache = {}
+
+    get = (key) => {
+        return this.cache[key];
+    }
+
+    set = (key, value) => {
+        this.cache[key] = value;
+        return value;
+    }
+
+    del = (key) => {
+        const val = cache[key];
+        delete this.cache[key];
+        return val;
+    }
+
+    has = (key) => {
+        return key in this.cache;
+    }
+}
+
+let oracleCache = new SessionCache();
 
 // wait 5 secs for the wasm init
 setTimeout(async () => {
@@ -75,7 +99,136 @@ app.post('/sign-in', (req, res) => {
     signInUser(req.body, res);
 });
 
+app.get('/fetch-titles', (req, res) => {
+    fetchPropertyTitles(res);
+});
+
+app.post('/submit-document', (req, res) => {
+    submitDocumentDetails(req.body, res);
+});
+
+
 // handler functions (below)
+async function upgradeToFullDid(user) {
+    // upgrade to full DID
+    let fullDidDoc = await kilt.createFullDid();
+    // add name of user to document
+    fullDidDoc["name"] = user.name;
+    const result = await new Promise(async (resolve) => {
+        // upload to ipfs and get new cid
+        await storg.uploadToIPFS(JSON.stringify(JSON.stringify(fullDidDoc))).then(cid => {
+            // update cid
+            (async function () {
+                const transfer = api.tx.oracle.recordUser(cid);
+                const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
+                    if (status.isInBlock) {
+                        events.forEach(({ event: { data, method, section }, phase }) => {
+                            // check for errors
+                            if (section.match("system", "i") && data.toString().indexOf("error") != -1)
+                                throw new Error("could not update DID")
+
+                            if (section.match("oracle", "i")) {
+                                // update the session data
+                                user.fullDid = fullDidDoc;
+                                user.did = fullDidDoc.fullDid.uri;
+                                user.cid = cid;
+
+                                oracleCache.set(req.nonce, user);
+                                resolve(fullDidDoc);
+                            }
+                        })
+                    }
+                })
+            })()
+        })
+    })
+
+    return user;
+}
+
+// submit filled document and generate a credential
+async function submitDocumentDetails(req, res) {
+    // try {
+        let user = authUser(req.nonce);
+        if (user) {
+            // retrieve the document properties from the chain
+            let property = (await api.query.oracle.propertyTypeRegistry(req.key)).toHuman();
+            if (!property) throw new Error(`could not retrieve properties of document`);
+
+            // mamke sure the user has a full did
+
+            // retrieve the document cType from IPFS
+            await storg.getFromIPFS(property.cid).then(cType => {
+                let matchedProps = util.matchProperty(property.attributes.split("~"), req.values.split("~"));
+
+                (async function () {
+                    if (user.did.indexOf("light") != -1)
+                        user = await upgradeToFullDid(user);
+
+                    // generate credential
+                    let cred = kilt.createClaim(cType, matchedProps, user.did);
+
+                    // upload to IPFS and retrieve the CID
+                    await storg.uploadToIPFS(JSON.stringify(JSON.stringify(cred))).then(async cid => {
+                        // get hash
+                        let hash = blake2AsHex(req.title);
+
+                        // record onchain
+                        const transfer = api.tx.oracle.recordCredential(hash, cid);
+                        const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
+                            if (status.isInBlock) {
+                                events.forEach(({ event: { data, method, section }, phase }) => {
+                                    // check for errors
+                                    if (section.match("system", "i") && data.toString().indexOf("error") != -1)
+                                        throw new Error("could not record credential ochain")
+
+                                    if (section.match("oracle", "i")) {
+                                        return res.send({
+                                            data: {},
+                                            error: true
+                                        })
+                                    }
+                                })
+                            }
+                        })
+                    });
+                })();
+            });
+        }
+    // } catch (e) {
+    //     return res.send({
+    //         data: {},
+    //         error: false
+    //     })
+    // }
+}
+
+// retreive the properties available onchain
+async function fetchPropertyTitles(res) {
+    try {
+        let property_data = [];
+        let properties = await api.query.oracle.propertyTypeRegistry.entries();
+        properties.forEach(([key, property]) => {
+            let parsed_property = property.toHuman();
+            property_data.push({
+                title: parsed_property.title,
+                cid: parsed_property.cid,
+                attr: parsed_property.attributes,
+                key: key.toHuman()[0]
+            })
+        });
+
+        return res.send({
+            data: util.sortByTitle(property_data),
+            error: false
+        })
+    } catch (e) {
+        return res.send({
+            data: [],
+            error: true
+        })
+    }
+}
 
 // try to connect to the Property Oracle and KILT chains
 async function initChains(req) {
@@ -89,52 +242,59 @@ async function initChains(req) {
 
 async function createPropertyType(req, res) {
     try {
-        const user = authUser(req.nonce);
+        let user = authUser(req.nonce);
         if (user) {
             // first make sure that the user has a full DID and not a light one
             if (user.did.indexOf("light") != -1) {
                 // upgrade to full DID
                 let fullDidDoc = await kilt.createFullDid();
+                // add name of user to document
+                fullDidDoc["name"] = user.name;
+                const result = await new Promise(async (resolve) => {
+                    // upload to ipfs and get new cid
+                    await storg.uploadToIPFS(JSON.stringify(JSON.stringify(fullDidDoc))).then(cid => {
+                        // update cid
+                        (async function () {
+                            const transfer = api.tx.oracle.recordUser(cid);
+                            const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
+                                if (status.isInBlock) {
+                                    events.forEach(({ event: { data, method, section }, phase }) => {
+                                        // check for errors
+                                        if (section.match("system", "i") && data.toString().indexOf("error") != -1)
+                                            throw new Error("could not update DID")
 
-                // upload to ipfs and get new cid
-                await storg.uploadToIPFS(JSON.stringify(JSON.stringify(fullDidDoc))).then(cid => {
-                    // update cid
-                    (async function () {
-                        const transfer = api.tx.oracle.recordUser(cid);
-                        const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
-                            if (status.isInBlock) {
-                                events.forEach(({ event: { data, method, section }, phase }) => {
-                                    // check for errors
-                                    if (section.match("system", "i") && data.toString().indexOf("error") != -1)
-                                        throw new Error("could not update DID")
+                                        if (section.match("oracle", "i")) {
+                                            // update the session data
+                                            user.fullDid = fullDidDoc;
+                                            user.did = fullDidDoc.fullDid.uri;
+                                            user.cid = cid;
 
-                                    if (section.match("oracle", "i")) {
-                                        // update the session data
-                                        let data = oracleCache.get(req.nonce);
-                                        data.fullDid = fullDidDoc;
-                                        data.did = fullDidDoc.fullDid.uri;
-                                        data.cid = cid;
-                                    }
-                                })
-                            }
-                        })
-                    })()
+                                            oracleCache.set(req.nonce, user);
+                                            resolve(fullDidDoc);
+                                        }
+                                    })
+                                }
+                            })
+                        })()
+                    })
                 })
+
+                console.log(result);
             }
 
             // now that we are sure that the user has a full did, we can create a KILT Ctype
-            let ptype = kilt.mintCType({ title: req.title, attr: req.attributes });
+            let ptype = await kilt.mintCType({ title: req.title, attr: req.attributes }, user.fullDid);
 
             console.log(ptype);
 
             // we'll store it on IPFS and keep its cid
-            await storg.uploadToIPFS(JSON.stringify(JSON.stringify(ptype))).then(ptypeCid => {
+            await storg.uploadToIPFS(JSON.stringify(JSON.stringify(ptype))).then(async ptypeCid => {
                 // create hash of property title/label
-                let ptHash = getUniquePtypeHash(req.title);
+                let ptHash = await getUniquePtypeHash(req.title);
 
                 // record it on chain
                 (async function () {
-                    const transfer = api.tx.oracle.recordPtype(ptHash, ptypeCid);
+                    const transfer = api.tx.oracle.recordPtype(ptHash, req.title, ptypeCid, req.attributes);
                     const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
                         if (status.isInBlock) {
                             events.forEach(({ event: { data, method, section }, phase }) => {
@@ -280,20 +440,20 @@ async function signInUser(req, res) {
         // get did document from IPFS
         await storg.getFromIPFS(cid).then(did_doc => {
             let doc = JSON.parse(did_doc);
-
+            doc = typeof doc === "string" ? JSON.parse(doc) : doc;
             // save session 
             let session_nonce = blake2AsHex(mnemonicGenerate());
             oracleCache.set(session_nonce, {
                 keyPair: user,
                 fullDid: doc,
-                did: util.getDid(doc.uri),
+                did: util.getDid(doc),
                 cid,
                 name: doc.name
             });
 
             return res.send({
                 data: {
-                    did: util.getDid(doc.uri),
+                    did: util.getDid(doc),
                     nonce: session_nonce,
                     name: doc.name
                 },

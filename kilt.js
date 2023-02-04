@@ -13,7 +13,8 @@ import { mnemonicGenerate, cryptoWaitReady, blake2AsHex, xxhashAsHex, mnemonicTo
 import { Keyring } from '@polkadot/keyring';
 
 // utility functions
-// const util = require("./utility.cjs");
+import * as util from "./utility.js";
+
 
 // set up the samaritan test account
 const keyring = new Keyring({ type: 'sr25519' });
@@ -21,7 +22,7 @@ let api = undefined;
 let sam = undefined;
 
 await cryptoWaitReady().then(() => {
-    sam = keyring.createFromUri("yellow obscure salmon affair extra six bubble clutch fly bread away tired", 'sr25519');
+    sam = keyring.createFromUri("shoe urban series connect prize poverty mimic random warm melody fence valid", 'sr25519');
 });
 
 export async function connect() {
@@ -32,6 +33,22 @@ export async function connect() {
         return false;
     }
     return true;
+}
+
+
+export function createClaim(ctype, attr, did) {
+    // first extract all the attributes needed and their values
+    let claim_attr = util.extractClaimAttr(ctype.properties, attr);
+
+    // The claimer generates the claim they would like to get attested.
+    const claim = Kilt.Claim.fromCTypeAndClaimContents(
+        ctype,
+        attr,
+        did
+    )
+
+    const credential = Kilt.Credential.fromClaim(claim);
+    return credential;
 }
 
 export async function getKiltLightDID(cid) {
@@ -58,22 +75,22 @@ export async function getKiltLightDID(cid) {
 export async function createFullDid() {
     const mnemonic = mnemonicGenerate()
     const { authentication, encryption, attestation, delegation } =
-    generateKeypairs(mnemonic);
+        generateKeypairs(mnemonic);
 
     // Get tx that will create the DID on chain and DID-URI that can be used to resolve the DID Document.
     const fullDidCreationTx = await Kilt.Did.getStoreTx(
-    {
-        authentication: [authentication],
-        keyAgreement: [encryption],
-        assertionMethod: [attestation],
-        capabilityDelegation: [delegation],
-    },
+        {
+            authentication: [authentication],
+            keyAgreement: [encryption],
+            assertionMethod: [attestation],
+            capabilityDelegation: [delegation],
+        },
 
-    sam.address,
-    async ({ data }) => ({
-        signature: authentication.sign(data),
-        keyType: authentication.type,
-    })
+        sam.address,
+        async ({ data }) => ({
+            signature: authentication.sign(data),
+            keyType: authentication.type,
+        })
     )
 
     await Kilt.Blockchain.signAndSubmitTx(fullDidCreationTx, sam)
@@ -120,7 +137,7 @@ export async function mintCType({ title, attr }, did_doc) {
     // create signCallback
     let signCallback = useSignCallback(did_doc.fullDid.uri, attestation);
 
-     // Create a new CType definition.
+    // Create a new CType definition.
     const ctype = Kilt.CType.fromProperties(title, ctObj);
 
     // Generate a creation tx.
@@ -157,6 +174,6 @@ function useSignCallback(keyUri, didSigningKey) {
         keyType: didSigningKey.type,
         keyUri,
     })
-  
+
     return signCallback
 }

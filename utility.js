@@ -44,16 +44,21 @@ export function Utf8ArrayToStr(array) {
     return out;
 }
 
-export function getDid(longKiltDid) {
-    return longKiltDid.split(`:`, 4).join(`:`);
+export function getDid(didDoc) {
+    // it might be a light or full kilt DID
+    didDoc = typeof didDoc === "string" ? JSON.parse(didDoc) : didDoc;
+    if (didDoc.uri) // ligth
+        return didDoc.uri.split(`:`, 4).join(`:`);
+    else
+        return didDoc.fullDid.uri;
 }
 
-export function strToCT(str) {
+export function strToCType(str) {
     let obj = {};
     let buf = str.split("~");
     for (const i in buf) {
         obj[i] = {
-            type: string
+            type: "string"
         };
     }
 
@@ -61,7 +66,25 @@ export function strToCT(str) {
 }
 
 export function generateRandomNumber() {
-    var min = 1; 
-    var max = 100; 
+    var min = 1;
+    var max = 100;
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export function sortByTitle(arr) {
+    return arr.sort((a, b) => {
+        if (a.title < b.title) {
+            return -1;
+        } else if (a.title > b.title) {
+            return 1;
+        } else {
+            return 0;
+        }
+    });
+}
+
+export function matchProperty(attr, values) {
+    let props = {};
+    attr.map((x, i) => props[x] = values[i]);
+    return props;
 }

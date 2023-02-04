@@ -68,9 +68,64 @@
                             aria-labelledby="nav-home-tab" tabindex="0">
                             ...
                         </div>
-                        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab"
+                        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-keys-tab"
                             tabindex="0">
-                            ...
+                            <div class="pt-10">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="alert alert-success document-reg-success hidden" role="alert">
+                                            Your document has been successfully recorded on the blockchain!
+                                        </div>
+                                        <div>
+                                            <p> These documents helps provide an unforgeable copy of the claim to your
+                                                property as soon as they are signed by the right authorities.
+                                                What property document do you need to cement your claim to your
+                                                property?
+                                            </p>
+                                        </div>
+                                        <code>Kindly select the document that is most appropriate for you:</code>
+                                        <div class="pt-10">
+                                            <form class="row g-3">
+                                                <div class="">
+                                                    <select class="form-select mb-3 document-type-selector"
+                                                        aria-label=".form-select-lg example">
+                                                        <option value="zero" selected>Select the right document from
+                                                            this menu</option>
+                                                    </select>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <p class="mt-30 hidden document-indicator">Document:</p>
+                                        <div class="mt-10 hidden property-document-container">
+                                            <div class="card  br-0 shadow">
+                                                <div class="card-body">
+                                                    <p class="center">📑
+                                                        <code class="document-title"></code>
+                                                    </p>
+                                                    <hr>
+                                                    <div class="row pt-10 document-property-body"></div>
+                                                    <p class="small center color-gray fs-80 mt-30">Property Oracle 2023
+                                                    </p>
+                                                </div>
+
+                                                <div>
+                                                </div>
+                                            </div>
+                                            <div class="d-grid gap-2 mt-30 ">
+                                                <button class="btn btn-primary submit-filled-document-before"
+                                                    type="button">Submit
+                                                    Document</button>
+                                                <button class="btn btn-primary submit-filled-document-after hidden" type="button"
+                                                    disabled>
+                                                    <span class="spinner-border spinner-border-sm" role="status"
+                                                        aria-hidden="true"></span>
+                                                    Submitting...
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab"
                             tabindex="0">
@@ -79,7 +134,7 @@
                                     <div class="card-body">
                                         <div>
                                             <div class="alert alert-success ptype-reg-success hidden" role="alert">
-                                                Your property type has been recorded on successfully on the blockchain!
+                                                Your property type has been recorded successfully on the blockchain!
                                             </div>
                                             <p>
                                                 Properties differ and only you know what requirements and
@@ -278,7 +333,7 @@
 
     <!-- footer  -->
     <div class="copy-right mt-10 center">
-        <code>Copyright (c) Algorealm 2023. All rights reserved</code>
+        <!-- <code>Copyright (c) Algorealm 2023. All rights reserved</code> -->
     </div>
 
     <!-- important JS files  -->

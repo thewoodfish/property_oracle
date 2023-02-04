@@ -8,6 +8,10 @@ function qs(tag) {
     return document.querySelector(tag);
 }
 
+function qsa(tag) {
+    return document.querySelectorAll(tag);
+}
+
 function ce(tag) {
     return document.createElement(tag);
 }
@@ -106,6 +110,27 @@ function getSessionNonce(value) {
     return sessionStorage.getItem("session_nonce");
 }
 
+async function populatePropertyTitles() {
+    // fetch all the property titles from the chain
+    fetch("/fetch-titles", {
+        method: 'get',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(res => {
+            (async function () {
+                await res.json().then(res => {
+                    // populate UI
+                    let select = qs(".document-type-selector");
+                    res.data.forEach(p => {
+                        select.innerHTML += `<option value="${p.title}$$$${p.cid}$$$${p.attr}$$$${p.key}">${p.title}</option>`;
+                    });
+                });
+            })();
+        })
+}
+
 // initialize connection to Chain
 async function initChainConnection(addr) {
     const result = await new Promise((resolve) => {
@@ -147,6 +172,7 @@ let ptype_buffer = ["address of property", "size of property"];
     toast(`waiting to connect to the <code>Property Oracle</code> and <code>KILT</code> chain.`);
     if (await initChainConnection('ws://127.0.0.1:9944') == "connected") {
         // update UI
+        await populatePropertyTitles();   // populate the document titles
         incConnectionCount();
         hide(".chain-connecting");
         appear(".chain-connected");
@@ -175,11 +201,16 @@ document.body.addEventListener(
                 }
             } else if (e.classList.contains("minus")) {
                 // delete specified attribute
-                console.log(e);
                 let attrElement = qs(`.xy-${e.classList[0].split('-')[1]}`);
-                let title = qs(".doc-title-field").value;
+
+                ptype_buffer.forEach(a => {
+                    if (e == attrElement.innerText) 
+                        delete e;
+                })
+                
                 attrElement.parentElement.removeChild(attrElement);
             } else if (e.classList.contains("reg-property-before")) {
+                let title = qs(".doc-title-field").value;
                 if (ptype_buffer.length > 2) {
                     if (userIsAuth()) {
                         hide(".reg-property-before");
@@ -200,7 +231,10 @@ document.body.addEventListener(
                             .then(res => {
                                 (async function () {
                                     await res.json().then(res => {
+                                        hide(".reg-property-after");
+                                        appear(".reg-property-before");
                                         appear(".ptype-reg-success");
+                                        clearField(".doc-title-field");
                                         setTimeout(() => hide(".ptype-reg-success"), 5000);
                                     });
                                 })();
@@ -262,6 +296,48 @@ document.body.addEventListener(
 
                     queryServerToSignIn(seed, true);
                 }
+            } else if (e.classList.contains("submit-filled-document-before")) {
+                if (userIsAuth()) {
+                    let allFilled = true;
+                    qsa(".form-document-properties").forEach(e => {
+                        if (!e.value)
+                            allFilled = false;
+                    });
+
+                    if (allFilled) {
+                        hide(".submit-filled-document-before");
+                        appear(".submit-filled-document-after");
+
+                        // take all the values
+                        let values = [];
+                        qsa(".form-document-properties").forEach(e => {
+                            values.push(e.value);
+                        })
+
+                        // send to server
+                        fetch("/submit-document", {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                "values": values.join("~"),
+                                "key": qs(".document-type-selector").value.split("$$$")[3],
+                                "nonce": getSessionNonce()
+                            })
+                        })
+                            .then(res => {
+                                (async function () {
+                                    await res.json().then(res => {
+                                        appear(".document-reg-success");
+                                        setTimeout(() => hide(".pdocument-reg-success"), 5000);
+                                    });
+                                })();
+                            })
+                    } else {
+                        toast(`please fill out all fields in the document.`);
+                    }
+                }
             }
         } else {
             toast(`waiting to connect to the <code>Property Oracle</code> and <code>KILT</code> chain.`);
@@ -269,3 +345,36 @@ document.body.addEventListener(
     },
     false
 );
+
+document.body.addEventListener("change", (e) => {
+    e = e.target;
+    if (e.classList.contains("document-type-selector")) {
+        // fetch the details from the network
+        let docBody = qs(".document-property-body");
+        if (e.value != "zero") {
+            const selected = e.value.split("$$$");
+            const attributes = selected[2].split('~');
+            const cid = selected[1];
+
+            appear(".document-indicator");
+            appear(".property-document-container");
+            qs(".document-title").innerText = selected[0];
+
+            attributes.forEach(a => {
+                docBody.innerHTML += `
+                    <div class="mb-3 col-6">
+                        <label for="${a}"
+                            class="form-label">${a}</label>
+                        <input type="text" class="form-control form-control-sm form-document-properties"
+                            id="${a}"
+                            placeholder="">
+                    </div>
+                `;
+            });
+        } else {
+            hide(".document-indicator");
+            hide(".property-document-container");
+            docBody.innerHTML = "";
+        }
+    }
+}, false);
