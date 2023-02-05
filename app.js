@@ -113,9 +113,75 @@ app.post('/fetch-properties', (req, res) => {
     fetchPropetyDocs(req.body, res);
 });
 
+app.post('/doc-details', (req, res) => {
+    loadDocumentDetails(req.body, res);
+});
+
+app.post('/transfer-property', (req, res) => {
+    transferProperty(req.body, res);
+});
+
+// transfer property to another entity
+async function transferProperty(req, res) {
+    try {
+        let user = authUser(req.nonce);
+        if (user) {
+            // first check for existence/validity of the recipients substrate address
+            let phantom = (await api.query.oracle.userRegistry(req.recipient)).toHuman();
+            if (!phantom) throw new Error("invalid recipient substrate address given!");
+
+            // make sure sender != reciever
+
+            // intiate transfer
+            const transfer = api.tx.oracle.transferProperty(req.recipient, req.property_id);
+            const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
+                if (status.isInBlock) {
+                    events.forEach(({ event: { data, method, section }, phase }) => {
+                        // check for errors
+                        if (section.match("system", "i") && data.toString().indexOf("error") != -1)
+                            throw new Error("property not found, please check the property id.")
+
+                        if (section.match("oracle", "i")) {
+                            return res.send({
+                                data: {},
+                                error: false
+                            })
+                        }
+                    })
+                }
+            })
+        } else throw new Error("User not recognized!");
+    } catch (e) {
+        return res.send({
+            data: {
+                msg: e.toString()
+            },
+            error: true
+        })
+    }
+}
+
+// load document details from IPFS 
+async function loadDocumentDetails(req, res) {
+    try {
+        await storg.getFromIPFS(req.cid).then(data => {
+            let doc = JSON.parse(data);
+            return res.send({
+                data: doc.claim.contents,
+                error: false
+            });
+        })
+    } catch (e) {
+        return res.send({
+            data: {},
+            error: true
+        })
+    }
+}
+
 // fetch all properties based on input
 async function fetchPropetyDocs(req, res) {
-    // try {
+    try {
         // first check if the properties are rquested by document title type
         if (req.type == "property-title") {
             // get hash key
@@ -124,10 +190,11 @@ async function fetchPropetyDocs(req, res) {
             // query the credential registry
             let property_data = [];
             let credentials = (await api.query.oracle.credentialRegistry(hkey)).toHuman();
-            // if (!credentials) throw new Error("could not find any credential entry");
-            
+            if (!credentials) throw new Error("could not find any credential entry");
+
             credentials.forEach((p) => {
                 property_data.push({
+                    id: blake2AsHex(p.cid),     // the unique id is an hash of the CID. The CID is always unique
                     owner: p.owner,
                     cid: p.cid,
                     verifiers: p.verifiers,
@@ -149,6 +216,7 @@ async function fetchPropetyDocs(req, res) {
                 let parsed_cred = property.toHuman()[0];
                 if (parsed_cred.owner == req.value) {
                     property_data.push({
+                        id: blake2AsHex(p.cid),     // the unique id is an hash of the CID. The CID is always unique
                         owner: parsed_cred.owner,
                         cid: parsed_cred.cid,
                         verifiers: parsed_cred.verifiers,
@@ -162,12 +230,12 @@ async function fetchPropetyDocs(req, res) {
                 error: false
             })
         }
-    // } catch (e) {
-    //     return res.send({
-    //         data: [],
-    //         error: true
-    //     })
-    // }
+    } catch (e) {
+        return res.send({
+            data: [],
+            error: true
+        })
+    }
 }
 
 // handler functions (below)
@@ -210,58 +278,58 @@ async function upgradeToFullDid(user) {
 
 // submit filled document and generate a credential
 async function submitDocumentDetails(req, res) {
-    // try {
-    let user = authUser(req.nonce);
-    if (user) {
-        // retrieve the document properties from the chain
-        let property = (await api.query.oracle.propertyTypeRegistry(req.key)).toHuman();
-        if (!property) throw new Error(`could not retrieve properties of document`);
+    try {
+        let user = authUser(req.nonce);
+        if (user) {
+            // retrieve the document properties from the chain
+            let property = (await api.query.oracle.propertyTypeRegistry(req.key)).toHuman();
+            if (!property) throw new Error(`could not retrieve properties of document`);
 
-        // mamke sure the user has a full did
+            // mamke sure the user has a full did
 
-        // retrieve the document cType from IPFS
-        await storg.getFromIPFS(property.cid).then(cType => {
-            let matchedProps = util.matchProperty(property.attributes.split("~"), req.values.split("~"));
+            // retrieve the document cType from IPFS
+            await storg.getFromIPFS(property.cid).then(cType => {
+                let matchedProps = util.matchProperty(property.attributes.split("~"), req.values.split("~"));
 
-            (async function () {
-                if (user.did.indexOf("light") != -1)
-                    user = await upgradeToFullDid(user);
+                (async function () {
+                    if (user.did.indexOf("light") != -1)
+                        user = await upgradeToFullDid(user);
 
-                // generate credential
-                let cred = kilt.createClaim(JSON.parse(cType), matchedProps, user.did);
+                    // generate credential
+                    let cred = kilt.createClaim(JSON.parse(cType), matchedProps, user.did);
 
-                // upload to IPFS and retrieve the CID
-                await storg.uploadToIPFS(JSON.stringify(cred)).then(async cid => {
-                    // get hash
-                    let hash = blake2AsHex(req.title);
-                    // record onchain
-                    const transfer = api.tx.oracle.recordCredential(hash, cid);
-                    const _ = await transfer.signAndSend(/* user.keyPair */bob, ({ events = [], status }) => {
-                        if (status.isInBlock) {
-                            events.forEach(({ event: { data, method, section }, phase }) => {
-                                // check for errors
-                                if (section.match("system", "i") && data.toString().indexOf("error") != -1)
-                                    throw new Error("could not record credential ochain")
+                    // upload to IPFS and retrieve the CID
+                    await storg.uploadToIPFS(JSON.stringify(cred)).then(async cid => {
+                        // get hash
+                        let hash = blake2AsHex(req.title);
+                        // record onchain
+                        const transfer = api.tx.oracle.recordCredential(hash, cid);
+                        const _ = await transfer.signAndSend(/* user.keyPair */bob, ({ events = [], status }) => {
+                            if (status.isInBlock) {
+                                events.forEach(({ event: { data, method, section }, phase }) => {
+                                    // check for errors
+                                    if (section.match("system", "i") && data.toString().indexOf("error") != -1)
+                                        throw new Error("could not record credential onchain")
 
-                                if (section.match("oracle", "i")) {
-                                    return res.send({
-                                        data: {},
-                                        error: true
-                                    })
-                                }
-                            })
-                        }
-                    })
-                });
-            })();
-        });
+                                    if (section.match("oracle", "i")) {
+                                        return res.send({
+                                            data: {},
+                                            error: false
+                                        })
+                                    }
+                                })
+                            }
+                        })
+                    });
+                })();
+            });
+        }
+    } catch (e) {
+        return res.send({
+            data: {},
+            error: true
+        })
     }
-    // } catch (e) {
-    //     return res.send({
-    //         data: {},
-    //         error: false
-    //     })
-    // }
 }
 
 // retreive the properties available onchain

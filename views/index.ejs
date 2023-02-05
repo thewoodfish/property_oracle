@@ -93,7 +93,7 @@
                                             <code>Please input a valid substrate address:</code>
                                             <form class="row g-3 pt-10">
                                                 <div class="col-auto width-50">
-                                                    <input type="test" class="form-control substrate-address-input"
+                                                    <input type="text" class="form-control substrate-address-input"
                                                         placeholder="5FHneW46xGXgs5mUiveU4sbTyGBzmstU...">
                                                 </div>
                                                 <div class="col-auto">
@@ -131,55 +131,6 @@
                                             </form>
                                         </div>
                                         <div class="credential-container fs-80">
-                                            <!-- <hr>  -->
-                                            <!-- <div class="mt-10 row pr-10">
-                                                <div class="col-4">
-                                                    <img src="img/file.png" class="width-100">
-                                                </div>
-                                                <div class="col-8 card border-0">
-                                                    <div class="card-body">
-                                                        <code class="bold small">Property #1</code>
-                                                        <div class="mt-20">
-                                                            <code>Owner:</code>
-                                                            5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
-                                                        </div>
-                                                        <div>
-                                                            <code>Verified and signed by:</code>
-                                                            <div class="pl-45">
-                                                                <div>5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
-                                                                </div>
-                                                                <div>5EhntDbfdTmSczTr3P9APAYzVU2UkNTLc6X8oQ9y4wE7e3mz
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <code>Details:</code>
-                                                            <div class="pl-20">
-                                                                <div>
-                                                                    <code>Address of property:</code> <span>26 Apple
-                                                                        Street,
-                                                                        Bay Area, SF, CA.</span>
-                                                                </div>
-                                                                <div>
-                                                                    <code>Size of property:</code> <span>342
-                                                                        hectares</span>
-                                                                </div>
-                                                                <div>
-                                                                    <code>Social Security Number:</code>
-                                                                    <span>37632873</span>
-                                                                </div>
-                                                                <div>
-                                                                    <code>Amount Paid:</code> <span>45,000,000</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="">
-                                                            <code>Timestamp:</code> Friday, 24th October, 2023.
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div> -->
-
                                         </div>
                                     </div>
                                 </div>
@@ -191,7 +142,7 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div class="alert alert-success document-reg-success hidden" role="alert">
-                                            Your document has been successfully recorded on the blockchain!
+                                            ✅ Your document has been successfully recorded on the blockchain!
                                         </div>
                                         <div>
                                             <p> These documents helps provide an unforgeable copy of the claim to your
@@ -251,7 +202,7 @@
                                     <div class="card-body">
                                         <div>
                                             <div class="alert alert-success ptype-reg-success hidden" role="alert">
-                                                Your property type has been recorded successfully on the blockchain!
+                                                ✅ Your property type has been recorded successfully on the blockchain!
                                             </div>
                                             <p>
                                                 Properties differ and only you know what requirements and
@@ -266,7 +217,7 @@
                                         <div class="pb-20 pt-10">
                                             <form class="row g-3">
                                                 <div class="col-auto width-50">
-                                                    <input type="test" class="form-control doc-title-field"
+                                                    <input type="text" class="form-control doc-title-field"
                                                         placeholder="name of document">
                                                 </div>
                                             </form>
@@ -276,7 +227,7 @@
                                             <form class="row g-3">
                                                 <div class="col-auto">
                                                     <!-- <label for="attr" class="visually-hidden">attr</label> -->
-                                                    <input type="test" class="form-control attr-field"
+                                                    <input type="text" class="form-control attr-field"
                                                         placeholder="attribute">
                                                 </div>
                                                 <div class="col-auto">
@@ -310,28 +261,41 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div>
+                                            <div class="alert alert-success property-transfer-success hidden" role="alert">
+                                                ✅ Your property has been successfully transferred!
+                                            </div>
+                                            <div class="alert alert-danger property-transfer-error hidden" role="alert">
+                                                ❌ <span class="main-error-text"></span>
+                                            </div>
                                             <p>
                                                 You can transfer your property easily and without stress to another
                                                 individual or entity in a secure and transparent fashion. All you need
-                                                is the <code>Substrate address </code>of the entity.
+                                                is the <code>Substrate address </code>of the entity and the ID of the
+                                                property.
                                             </p>
                                         </div>
                                         <code>Please input a valid substrate address of the recipient:</code>
                                         <div class="pt-10">
-                                            <form class="row g-3">
+                                            <form class="g-3">
                                                 <div class="col-auto width-50">
                                                     <!-- <label for="attr" class="visually-hidden">attr</label> -->
-                                                    <input type="test" class="form-control sub-address"
+                                                    <input type="text" class="form-control sub-address"
                                                         placeholder="5FHneW46xGXgs5mUiveU4sbTyGBzmstU...">
+
+                                                    <div class="mt-10">
+                                                        <code>Please input a valid property ID:</code>
+                                                        <input type="text" class="mt-10 form-control property-id"
+                                                            placeholder="0x829f65744b2nd5742cec908a6cf3bfe4f3c19c14d5...">
+                                                    </div>
                                                 </div>
-                                                <div class="col-auto">
+                                                <div class="col-auto mt-20">
                                                     <button class="btn btn-primary mb-3 transfer-property-btn-before"
                                                         onclick="return false">Transfer Property</button>
                                                     <button class="btn btn-primary transfer-property-btn-after hidden"
                                                         type="button" disabled>
                                                         <span class="spinner-border spinner-border-sm" role="status"
                                                             aria-hidden="true"></span>
-                                                        Processing...
+                                                        Processing Transfer...
                                                     </button>
                                                 </div>
                                             </form>
@@ -361,7 +325,7 @@
                                             <form class="row g-3">
                                                 <div class="col-auto width-50">
                                                     <!-- <label for="attr" class="visually-hidden">attr</label> -->
-                                                    <input type="test" class="form-control pseudo-name"
+                                                    <input type="text" class="form-control pseudo-name"
                                                         placeholder="your name or pseudo-name e.g woodfish">
                                                 </div>
                                                 <div class="col-auto">

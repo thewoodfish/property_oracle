@@ -97,7 +97,7 @@ async function queryServerToSignIn(seed, rollup) {
                         // roll up the card
                         if (rollup) click(".sign-in-prompt");
                     } else {
-                        toast("Could not sign you in. Please check your seed.");
+                        toast("❌ Could not sign you in. Please check your seed.");
                         hide(".sign-in-btn-after");
                         appear(".sign-in-btn-before");
                     }
@@ -110,7 +110,7 @@ async function queryServerToSignIn(seed, rollup) {
 function userIsAuth() {
     if (qs(".signed-in-user-did").innerText.indexOf("xxxxx") == -1) return true;
     else {
-        toast("You need to be authenticated to perform this action");
+        toast("❌ You need to be authenticated to perform this action");
         return false;
     }
 }
@@ -200,32 +200,39 @@ async function populateProperties(value, type) {
 
                     res.data.forEach(p => {
                         i++;
+
+                        // prepare the verifiers
+                        let verifiers = "";
+                        p.verifiers.forEach(v => {
+                            verifiers += `<div>${v}</div>`;
+                        })
                         cc.innerHTML += `
                         <hr>
                         <div class="mt-10 row pr-10">
-                            <div class="col-4">
+                            <div class="col-4 pt-30">
                                 <img src="img/file.png" class="width-100">
                             </div>
                             <div class="col-8 card border-0">
                                 <div class="card-body">
                                     <code class="bold small">Property #${i}</code>
-                                    <div class="mt-20">
+                                    <div class="mt-20 bold">
+                                        <code>ID:</code>
+                                        ${p.id}
+                                    </div>
+                                    <div class="">
                                         <code>Owner:</code>
                                         ${p.owner}
                                     </div>
                                     <div>
                                         <code>Verified and signed by:</code>
                                         <div class="pl-45">
-                                            ${p.verifiers.forEach(v => {
-                            `<div>${v}</div>`
-                        })
-                            }
+                                            ${verifiers}
                                         </div>
                                     </div>
                                     <div>
                                         <code>Details:</code>
                                         <div class="pl-20">
-                                            <a class="load-property-details underline" data-cid=${p.cid}>load Details</a>
+                                            <a class="load-property-details underline pointer" data-cid=${p.cid}>load property details</a>
                                         </div>
                                     </div>
                                     <div class="">
@@ -276,6 +283,7 @@ function click(attr) {
 
 // to prevent duplicate additiom of values
 let ptype_buffer = ["address of property", "size of property"];
+let pseudo_buffer = ["address of property", "size of property"];
 
 // intialize connection to chain
 (async function () {
@@ -286,7 +294,7 @@ let ptype_buffer = ["address of property", "size of property"];
         incConnectionCount();
         hide(".chain-connecting");
         appear(".chain-connected");
-        toast("Connection to <code>Property Oracle chain</code> and <code>KILT chain</code> established.")
+        toast("✅ Connection to <code>Property Oracle chain</code> and <code>KILT chain</code> established.")
         incConnectionCount();
     };
 })();
@@ -302,12 +310,14 @@ document.body.addEventListener(
                 let field_val = qs(".attr-field").value;
                 let code = generateRandomNumber();
                 if (field_val) {
-                    if (!ptype_buffer.includes(field_val)) {
+                    if (!pseudo_buffer.includes(field_val.toLowerCase())) {
                         let attr_display = qs(".attr-display");
                         attr_display.innerHTML += `<p class="xy-${code}"><code><span class="xx-${code} minus blue pointer">-</span> ${field_val}</code></p>`;
                         clearField(".attr-field");
-                        ptype_buffer.push(field_val.toLowerCase());
-                    }
+                        ptype_buffer.push(field_val);
+                        pseudo_buffer.push(field_val.toLowerCase());
+                    } else
+                        toast(`❌ "${field_val}" has been added already`);
                 }
             } else if (e.classList.contains("minus")) {
                 // delete specified attribute
@@ -346,12 +356,13 @@ document.body.addEventListener(
                                         appear(".ptype-reg-success");
                                         clearField(".doc-title-field");
                                         setTimeout(() => hide(".ptype-reg-success"), 5000);
+                                        populatePropertyTitles();
                                     });
                                 })();
                             })
                     }
                 } else {
-                    toast(`You need to specify more attributes`);
+                    toast(`❌ You need to specify more attributes`);
                 }
             } else if (e.classList.contains("gen-mnemonics-before")) {
                 const name = qs(".pseudo-name").value;
@@ -394,12 +405,12 @@ document.body.addEventListener(
                             })();
                         })
                 } else {
-                    toast(`Please fill in you name to continue`);
+                    toast(`❌ Please fill in you name to continue`);
                 }
             } else if (e.classList.contains("sign-in-btn-before")) {
                 let seed = qs(".seed-phrase-ta").value;
                 if (seed.split(` `).length != 12)
-                    toast("seed phrases must be complete 12 words only.");
+                    toast("❌ seed phrases must be complete 12 words only.");
                 else {
                     hide(".sign-in-btn-before");
                     appear(".sign-in-btn-after");
@@ -455,7 +466,7 @@ document.body.addEventListener(
                                 })();
                             })
                     } else {
-                        toast(`please fill out all fields in the document.`);
+                        toast(`❌ please fill out all fields in the document.`);
                     }
                 }
             } else if (e.classList.contains("property-search0-btn-before")) {
@@ -472,7 +483,7 @@ document.body.addEventListener(
                         await populateProperties(substrate_addr, "substrate-addr");
                     })();
                 } else {
-                    toast("Please input a valid substrate address");
+                    toast("❌ Please input a valid substrate address");
                 }
             } else if (e.classList.contains("property-search1-btn-before")) {
                 if (qs(".property-type-selector").value != "zero") {
@@ -486,6 +497,74 @@ document.body.addEventListener(
                     (async function () {
                         await populateProperties(qs(".property-type-selector").value, "property-title");
                     })();
+                }
+            } else if (e.classList.contains("load-property-details")) {
+                // load property details from IPFS
+                e.innerText = "loading...";
+                fetch("/doc-details", {
+                    method: 'post',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "cid": e.dataset.cid
+                    })
+                })
+                    .then(res => {
+                        (async function () {
+                            await res.json().then(res => {
+                                let div = e.parentElement;
+                                div.innerHTML = "";
+
+                                Object.entries(res.data).forEach(([k, v]) => {
+                                    div.innerHTML += `
+                                        <div>
+                                            <code>${k}:</code> <span>${v}</span>
+                                        </div>
+                                    `;
+                                })
+                            });
+                        })();
+                    })
+            } else if (e.classList.contains("transfer-property-btn-before")) {
+                const propertID = qs(".property-id").value;
+                const substrateAddr = qs(".sub-address").value;
+                if (propertID && substrateAddr) {
+                    hide(".transfer-property-btn-before");
+                    appear(".transfer-property-btn-after");
+
+                    fetch("/transfer-property", {
+                        method: 'post',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            "property_id": propertID,
+                            "recipient": substrateAddr
+                        })
+                    })
+                        .then(res => {
+                            (async function () {
+                                await res.json().then(res => {
+                                    if (!res.error) {
+                                        appear(".property-transfer-success");
+                                        setTimeout(() => hide(".property-transfer-success"), 5000);
+
+                                        clearField(".sub-address");
+                                        clearField(".property-id");
+                                    } else {
+                                        qs(".main-error-text").innerText = res.data.msg;
+                                        appear(".property-transfer-error");
+                                        setTimeout(() => hide(".property-transfer-error"), 5000);
+                                    }
+
+                                    appear(".transfer-property-btn-before");
+                                    hide(".transfer-property-btn-after");
+                                });
+                            })();
+                        })
+                } else {
+                    toast(`❌ please fill in all the input areas.`)
                 }
             }
         } else {
