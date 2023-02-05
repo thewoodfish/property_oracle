@@ -32,8 +32,8 @@
                 <div class="container pl-0">
                     <nav>
                         <div class="nav nav-tabs small" id="nav-tab" role="tablist">
-                            <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab"
-                                data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home"
+                            <button class="nav-link active" id="nav-search-tab" data-bs-toggle="tab"
+                                data-bs-target="#nav-search" type="button" role="tab" aria-controls="nav-search"
                                 aria-selected="true">
                                 Search for property
                             </button>
@@ -42,8 +42,8 @@
                                 aria-selected="false">
                                 Register property
                             </button>
-                            <button class="nav-link" id="nav-transfer" data-bs-toggle="tab"
-                                data-bs-target="#nav-disabled" type="button" role="tab" aria-controls="nav-transfer"
+                            <button class="nav-link" id="nav-transfer-tab" data-bs-toggle="tab"
+                                data-bs-target="#nav-transfer" type="button" role="tab" aria-controls="nav-transfer"
                                 aria-selected="false">
                                 Transfer property
                             </button>
@@ -64,11 +64,128 @@
                         </div>
                     </nav>
                     <div class="tab-content" id="nav-tabContent">
-                        <div class="tab-pane fade show active" id="nav-home" role="tabpanel"
-                            aria-labelledby="nav-home-tab" tabindex="0">
-                            ...
+                        <div class="tab-pane fade show active" id="nav-search" role="tabpanel"
+                            aria-labelledby="nav-searcg-tab" tabindex="0">
+                            <div class="pt-10">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div>
+                                            <p>
+                                                Search for any property document or claim. You can search by property
+                                                document title or specifically for properties belonging to an
+                                                individual.
+                                            </p>
+                                        </div>
+                                        <code>Please select your filter. Search by:</code>
+                                        <div class="pt-10">
+                                            <form class="row g-3">
+                                                <div class="col-auto width-50">
+                                                    <select class="form-select mb-3 property-search-filter"
+                                                        aria-label=".form-select-lg example">
+                                                        <option value="property-title" selected>Property Document Title
+                                                        </option>
+                                                        <option value="substrate-address">Substrate address</option>
+                                                    </select>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="hidden document-select-option-1">
+                                            <code>Please input a valid substrate address:</code>
+                                            <form class="row g-3 pt-10">
+                                                <div class="col-auto width-50">
+                                                    <input type="test" class="form-control substrate-address-input"
+                                                        placeholder="5FHneW46xGXgs5mUiveU4sbTyGBzmstU...">
+                                                </div>
+                                                <div class="col-auto">
+                                                    <button class="btn btn-primary mb-3 property-search0-btn-before"
+                                                        onclick="return false">Search</button>
+                                                    <button class="btn btn-primary property-search0-btn-after hidden"
+                                                        type="button" disabled>
+                                                        <span class="spinner-border spinner-border-sm" role="status"
+                                                            aria-hidden="true"></span>
+                                                        Searching...
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="document-select-option-2">
+                                            <code>Please select the specific document type:</code>
+                                            <form class="row g-3 pt-10">
+                                                <div class="col-auto width-50">
+                                                    <select class="form-select mb-3 property-type-selector"
+                                                        aria-label=".form-select-lg example">
+                                                        <option value="zero" selected>Select the right document from
+                                                            this menu</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-auto">
+                                                    <button class="btn btn-primary mb-3 property-search1-btn-before"
+                                                        onclick="return false">Search</button>
+                                                    <button class="btn btn-primary property-search1-btn-after hidden"
+                                                        type="button" disabled>
+                                                        <span class="spinner-border spinner-border-sm" role="status"
+                                                            aria-hidden="true"></span>
+                                                        Searching...
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="credential-container fs-80">
+                                            <!-- <hr>  -->
+                                            <!-- <div class="mt-10 row pr-10">
+                                                <div class="col-4">
+                                                    <img src="img/file.png" class="width-100">
+                                                </div>
+                                                <div class="col-8 card border-0">
+                                                    <div class="card-body">
+                                                        <code class="bold small">Property #1</code>
+                                                        <div class="mt-20">
+                                                            <code>Owner:</code>
+                                                            5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
+                                                        </div>
+                                                        <div>
+                                                            <code>Verified and signed by:</code>
+                                                            <div class="pl-45">
+                                                                <div>5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
+                                                                </div>
+                                                                <div>5EhntDbfdTmSczTr3P9APAYzVU2UkNTLc6X8oQ9y4wE7e3mz
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <code>Details:</code>
+                                                            <div class="pl-20">
+                                                                <div>
+                                                                    <code>Address of property:</code> <span>26 Apple
+                                                                        Street,
+                                                                        Bay Area, SF, CA.</span>
+                                                                </div>
+                                                                <div>
+                                                                    <code>Size of property:</code> <span>342
+                                                                        hectares</span>
+                                                                </div>
+                                                                <div>
+                                                                    <code>Social Security Number:</code>
+                                                                    <span>37632873</span>
+                                                                </div>
+                                                                <div>
+                                                                    <code>Amount Paid:</code> <span>45,000,000</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="">
+                                                            <code>Timestamp:</code> Friday, 24th October, 2023.
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div> -->
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-keys-tab"
+                        <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab"
                             tabindex="0">
                             <div class="pt-10">
                                 <div class="card">
@@ -115,8 +232,8 @@
                                                 <button class="btn btn-primary submit-filled-document-before"
                                                     type="button">Submit
                                                     Document</button>
-                                                <button class="btn btn-primary submit-filled-document-after hidden" type="button"
-                                                    disabled>
+                                                <button class="btn btn-primary submit-filled-document-after hidden"
+                                                    type="button" disabled>
                                                     <span class="spinner-border spinner-border-sm" role="status"
                                                         aria-hidden="true"></span>
                                                     Submitting...
@@ -128,7 +245,7 @@
                             </div>
                         </div>
                         <div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab"
-                            tabindex="0">
+                            tabindex="1">
                             <div class="pt-10">
                                 <div class="card">
                                     <div class="card-body">
@@ -187,20 +304,48 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab"
-                            tabindex="0">
-                            ...
+                        <div class="tab-pane fade" id="nav-transfer" role="tabpanel" aria-labelledby="nav-transfer-tab"
+                            tabindex="3">
+                            <div class="pt-10">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div>
+                                            <p>
+                                                You can transfer your property easily and without stress to another
+                                                individual or entity in a secure and transparent fashion. All you need
+                                                is the <code>Substrate address </code>of the entity.
+                                            </p>
+                                        </div>
+                                        <code>Please input a valid substrate address of the recipient:</code>
+                                        <div class="pt-10">
+                                            <form class="row g-3">
+                                                <div class="col-auto width-50">
+                                                    <!-- <label for="attr" class="visually-hidden">attr</label> -->
+                                                    <input type="test" class="form-control sub-address"
+                                                        placeholder="5FHneW46xGXgs5mUiveU4sbTyGBzmstU...">
+                                                </div>
+                                                <div class="col-auto">
+                                                    <button class="btn btn-primary mb-3 transfer-property-btn-before"
+                                                        onclick="return false">Transfer Property</button>
+                                                    <button class="btn btn-primary transfer-property-btn-after hidden"
+                                                        type="button" disabled>
+                                                        <span class="spinner-border spinner-border-sm" role="status"
+                                                            aria-hidden="true"></span>
+                                                        Processing...
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab"
-                            tabindex="0">
-                            ...
-                        </div>
-                        <div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab"
-                            tabindex="0">
+                            tabindex="4">
                             ...
                         </div>
                         <div class="tab-pane fade" id="nav-keys" role="tabpanel" aria-labelledby="nav-keys-tab"
-                            tabindex="0">
+                            tabindex="5">
                             <div class="pt-10">
                                 <div class="card">
                                     <div class="card-body">

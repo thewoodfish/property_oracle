@@ -71,11 +71,11 @@ export function generateRandomNumber() {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export function sortByTitle(arr) {
+export function sortBy(key, arr) {
     return arr.sort((a, b) => {
-        if (a.title < b.title) {
+        if (a[key] < b[key]) {
             return -1;
-        } else if (a.title > b.title) {
+        } else if (a[key] > b[key]) {
             return 1;
         } else {
             return 0;

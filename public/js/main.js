@@ -38,6 +38,40 @@ function generateRandomNumber() {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function convertTimestamp(timestamp) {
+    // Create a new date object from the timestamp
+    var date = new Date(timestamp * 1000);
+
+    // Get the day of the week
+    var daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    var dayOfWeek = daysOfWeek[date.getUTCDay()];
+
+    // Get the month and day of month
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var month = months[date.getUTCMonth()];
+    var dayOfMonth = date.getUTCDate();
+
+    // Get the hours, minutes, and format for AM/PM
+    var hours = date.getUTCHours();
+    var minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    var ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = (hours % 12 || 12).toString().padStart(2, '0');
+
+    // Return the nicely formatted date time string
+    return `${dayOfWeek} ${hours}:${minutes}${ampm}, ${dayOfMonth}${getOrdinalIndicator(dayOfMonth)} of ${month}, ${date.getUTCFullYear()}`;
+}
+
+// Function to get the ordinal indicator (e.g. st, nd, rd, th) for a number
+function getOrdinalIndicator(num) {
+    if (num > 3 && num < 21) return 'th';
+    switch (num % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+    }
+}
+
 async function queryServerToSignIn(seed, rollup) {
     // send request to chain
     fetch("/sign-in", {
@@ -76,7 +110,7 @@ async function queryServerToSignIn(seed, rollup) {
 function userIsAuth() {
     if (qs(".signed-in-user-did").innerText.indexOf("xxxxx") == -1) return true;
     else {
-        toast("You need to be authenticated to perform this function");
+        toast("You need to be authenticated to perform this action");
         return false;
     }
 }
@@ -125,6 +159,82 @@ async function populatePropertyTitles() {
                     let select = qs(".document-type-selector");
                     res.data.forEach(p => {
                         select.innerHTML += `<option value="${p.title}$$$${p.cid}$$$${p.attr}$$$${p.key}">${p.title}</option>`;
+                    });
+
+                    // populate UI of type selector
+                    let select1 = qs(".property-type-selector");
+                    res.data.forEach(p => {
+                        select1.innerHTML += `<option value="${p.title}">${p.title}</option>`;
+                    });
+                });
+            })();
+        })
+}
+
+async function populateProperties(value, type) {
+    // fetch all the property titles from the chain
+    fetch("/fetch-properties", {
+        method: 'post',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            value, type
+        })
+    })
+        .then(res => {
+            (async function () {
+                await res.json().then(res => {
+                    // first enable the select box
+                    qs(".property-search-filter").disabled = false;
+
+                    // change the buttons
+                    const index = qs(".property-search-filter").dataset.index;
+                    hide(`.property-search${index}-btn-after`);
+                    appear(`.property-search${index}-btn-before`);
+
+                    // update the UI
+                    let i = 0;
+                    let cc = qs(".credential-container");
+                    cc.innerHTML = "";
+
+                    res.data.forEach(p => {
+                        i++;
+                        cc.innerHTML += `
+                        <hr>
+                        <div class="mt-10 row pr-10">
+                            <div class="col-4">
+                                <img src="img/file.png" class="width-100">
+                            </div>
+                            <div class="col-8 card border-0">
+                                <div class="card-body">
+                                    <code class="bold small">Property #${i}</code>
+                                    <div class="mt-20">
+                                        <code>Owner:</code>
+                                        ${p.owner}
+                                    </div>
+                                    <div>
+                                        <code>Verified and signed by:</code>
+                                        <div class="pl-45">
+                                            ${p.verifiers.forEach(v => {
+                            `<div>${v}</div>`
+                        })
+                            }
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <code>Details:</code>
+                                        <div class="pl-20">
+                                            <a class="load-property-details underline" data-cid=${p.cid}>load Details</a>
+                                        </div>
+                                    </div>
+                                    <div class="">
+                                        <code>Timestamp:</code> ${convertTimestamp(parseInt(p.timestamp.replaceAll(',', '')))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div> 
+                    `;
                     });
                 });
             })();
@@ -203,11 +313,11 @@ document.body.addEventListener(
                 // delete specified attribute
                 let attrElement = qs(`.xy-${e.classList[0].split('-')[1]}`);
 
-                ptype_buffer.forEach(a => {
-                    if (e == attrElement.innerText) 
-                        delete e;
-                })
-                
+                for (var i = 0; i < ptype_buffer.length; i++) {
+                    if (ptype_buffer[i] == attrElement.innerText)
+                        ptype_buffer.splice(i, 1);
+                };
+
                 attrElement.parentElement.removeChild(attrElement);
             } else if (e.classList.contains("reg-property-before")) {
                 let title = qs(".doc-title-field").value;
@@ -314,6 +424,8 @@ document.body.addEventListener(
                             values.push(e.value);
                         })
 
+                        const important_vals = qs(".document-type-selector").value.split("$$$");
+
                         // send to server
                         fetch("/submit-document", {
                             method: 'post',
@@ -322,7 +434,8 @@ document.body.addEventListener(
                             },
                             body: JSON.stringify({
                                 "values": values.join("~"),
-                                "key": qs(".document-type-selector").value.split("$$$")[3],
+                                "title": important_vals[0],
+                                "key": important_vals[3],
                                 "nonce": getSessionNonce()
                             })
                         })
@@ -330,13 +443,49 @@ document.body.addEventListener(
                                 (async function () {
                                     await res.json().then(res => {
                                         appear(".document-reg-success");
-                                        setTimeout(() => hide(".pdocument-reg-success"), 5000);
+                                        setTimeout(() => hide(".document-reg-success"), 5000);
+                                        hide(".document-indicator");
+                                        hide(".property-document-container");
+                                        qs(".document-property-body").innerHTML = "";
+
+                                        hide(".submit-filled-document-after");
+                                        appear(".submit-filled-document-before");
+
                                     });
                                 })();
                             })
                     } else {
                         toast(`please fill out all fields in the document.`);
                     }
+                }
+            } else if (e.classList.contains("property-search0-btn-before")) {
+                let substrate_addr = qs(".substrate-address-input").value;
+                if (substrate_addr) {
+                    hide(".property-search0-btn-before");
+                    appear(".property-search0-btn-after");
+
+                    // disable filter
+                    qs(".property-search-filter").disabled = true;
+                    qs(".property-search-filter").dataset.index = "0";
+
+                    (async function () {
+                        await populateProperties(substrate_addr, "substrate-addr");
+                    })();
+                } else {
+                    toast("Please input a valid substrate address");
+                }
+            } else if (e.classList.contains("property-search1-btn-before")) {
+                if (qs(".property-type-selector").value != "zero") {
+                    hide(".property-search1-btn-before");
+                    appear(".property-search1-btn-after");
+
+                    // disable filter
+                    qs(".property-search-filter").disabled = true;
+                    qs(".property-search-filter").dataset.index = "1";
+
+                    (async function () {
+                        await populateProperties(qs(".property-type-selector").value, "property-title");
+                    })();
                 }
             }
         } else {
@@ -351,6 +500,7 @@ document.body.addEventListener("change", (e) => {
     if (e.classList.contains("document-type-selector")) {
         // fetch the details from the network
         let docBody = qs(".document-property-body");
+        docBody.innerHTML = "";
         if (e.value != "zero") {
             const selected = e.value.split("$$$");
             const attributes = selected[2].split('~');
@@ -374,7 +524,14 @@ document.body.addEventListener("change", (e) => {
         } else {
             hide(".document-indicator");
             hide(".property-document-container");
-            docBody.innerHTML = "";
+        }
+    } else if (e.classList.contains("property-search-filter")) {
+        if (!e.selectedIndex) {
+            hide(".document-select-option-1");
+            appear(".document-select-option-2");
+        } else {
+            appear(".document-select-option-1");
+            hide(".document-select-option-2");
         }
     }
 }, false);
