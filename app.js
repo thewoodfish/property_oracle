@@ -121,6 +121,127 @@ app.post('/transfer-property', (req, res) => {
     transferProperty(req.body, res);
 });
 
+app.post('/fetch-property', (req, res) => {
+    fetchPropertyClaim(req.body, res);
+});
+
+app.post('/sign-claim', (req, res) => {
+    signPropertyClaim(req.body, res);
+});
+
+// attest an individuals claim to a property
+async function signPropertyClaim(req, res) {
+    try {
+        let user = authUser(req.nonce);
+        if (user) {
+            // get cid of property claim
+            let credentials = await api.query.oracle.credentialRegistry.entries();
+            if (!credentials) throw new Error("could not locate any credential entry");
+
+            let cid = undefined;
+
+            credentials.forEach(([key, property]) => {
+                let parsed_cred = property.toHuman()[0];
+                if (blake2AsHex(parsed_cred.cid) == req.property_id) {
+                    cid = parsed_cred.cid;
+                }
+            });
+
+            // make user has upgraded to having a full DID
+            if (user.did.indexOf("light") != -1)
+                user = upgradeToFullDid(user);
+
+            // retrieve the KILT claim from IPFS
+            await storg.getFromIPFS(cid).then(async data => {
+                let claim = JSON.parse(data);
+                let success = await kilt.createAttestation(user.did, user.fullDidDoc.mnemonic, claim);
+
+                if (success) {
+                    // save signoatory onchain
+                    const transfer = api.tx.oracle.attestClaim(pkey, cid);
+                    const _ = await transfer.signAndSend(/* user.keyPair */bob, ({ events = [], status }) => {
+                        if (status.isInBlock) {
+                            events.forEach(({ event: { data, method, section }, phase }) => {
+                                // check for errors
+                                if (section.match("system", "i") && data.toString().indexOf("error") != -1) {
+                                    return res.send({
+                                        data: {
+                                            msg: "could not record signature"
+                                        },
+                                        error: true
+                                    })
+                                }
+
+                                if (section.match("oracle", "i")) {
+                                    return res.send({
+                                        data: {},
+                                        error: false
+                                    })
+                                }
+                            })
+                        }
+                    })
+                } else
+                    throw new Error("could not append signature");
+            });
+        } else throw new Error("User not recognized!");
+    } catch (e) {
+        return res.send({
+            data: {},
+            error: true
+        });
+    }
+
+}
+
+// fetch property from IPFS and return its properties
+async function fetchPropertyClaim(req, res) {
+    try {
+        // get cid of property claim
+        let credentials = await api.query.oracle.credentialRegistry.entries();
+        if (!credentials) throw new Error("could not locate any credential entry");
+
+        let cid = undefined;
+        let docTitle = undefined;
+        let owner = undefined;
+
+        credentials.forEach(([key, property]) => {
+            let parsed_cred = property.toHuman()[0];
+            if (blake2AsHex(parsed_cred.cid) == req.property_id) {
+                // try to find the title of the document
+                let hkey = key.toHuman()[0];
+
+                (async function () {
+                    let prop = (await api.query.oracle.propertyTypeRegistry(hkey)).toHuman();
+                    if (!prop) throw new Error("could not locate property document!");
+
+                    docTitle = prop.title;
+                })()
+
+                cid = parsed_cred.cid;
+                owner = parsed_cred.owner;
+            }
+        });
+
+        await storg.getFromIPFS(cid).then(data => {
+            let doc = JSON.parse(data);
+            return res.send({
+                data: {
+                    title: docTitle,
+                    attr: doc.claim.contents,
+                    owner
+                },
+                error: false
+            });
+        });
+    } catch (e) {
+        return res.send({
+            data: {},
+            error: false
+        });
+    }
+}
+
 // transfer property to another entity
 async function transferProperty(req, res) {
     try {
@@ -131,25 +252,51 @@ async function transferProperty(req, res) {
             if (!phantom) throw new Error("invalid recipient substrate address given!");
 
             // make sure sender != reciever
+            // if (user.address == req.recipient) throw new Error("you cannot transfer to yourself!");
 
-            // intiate transfer
-            const transfer = api.tx.oracle.transferProperty(req.recipient, req.property_id);
-            const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
-                if (status.isInBlock) {
-                    events.forEach(({ event: { data, method, section }, phase }) => {
-                        // check for errors
-                        if (section.match("system", "i") && data.toString().indexOf("error") != -1)
-                            throw new Error("property not found, please check the property id.")
+            // look for important values needed for the transfer
+            let credentials = await api.query.oracle.credentialRegistry.entries();
+            if (!credentials) throw new Error("could not locate any credential entry");
 
-                        if (section.match("oracle", "i")) {
-                            return res.send({
-                                data: {},
-                                error: false
-                            })
-                        }
-                    })
+            let pkey = undefined;
+            let cid = undefined;
+
+            credentials.forEach(([key, property]) => {
+                let parsed_cred = property.toHuman()[0];
+                if (blake2AsHex(parsed_cred.cid) == req.property_id /* && parsed_cred.owner == user.address */) {
+                    pkey = key.toHuman()[0];
+                    cid = parsed_cred.cid;
                 }
-            })
+            });
+
+            if (cid && pkey) {
+                // intiate transfer
+                const transfer = api.tx.oracle.transferProperty(req.recipient, pkey, cid);
+                const _ = await transfer.signAndSend(/* user.keyPair */bob, ({ events = [], status }) => {
+                    if (status.isInBlock) {
+                        events.forEach(({ event: { data, method, section }, phase }) => {
+                            // check for errors
+                            if (section.match("system", "i") && data.toString().indexOf("error") != -1) {
+                                return res.send({
+                                    data: {
+                                        msg: "property not found, please check the property id."
+                                    },
+                                    error: true
+                                })
+                            }
+
+                            if (section.match("oracle", "i")) {
+                                return res.send({
+                                    data: {},
+                                    error: false
+                                })
+                            }
+                        })
+                    }
+
+                })
+            } else throw new Error(`Could not find a property belonging to you with the id "${req.property_id}"`);
+
         } else throw new Error("User not recognized!");
     } catch (e) {
         return res.send({
@@ -190,7 +337,7 @@ async function fetchPropetyDocs(req, res) {
             // query the credential registry
             let property_data = [];
             let credentials = (await api.query.oracle.credentialRegistry(hkey)).toHuman();
-            if (!credentials) throw new Error("could not find any credential entry");
+            if (!credentials) throw new Error("could not locate any credential entry");
 
             credentials.forEach((p) => {
                 property_data.push({
@@ -210,7 +357,7 @@ async function fetchPropetyDocs(req, res) {
             // select properties belonging to a specific entity
             let property_data = [];
             let credentials = await api.query.oracle.credentialRegistry.entries();
-            if (!credentials) throw new Error("could not find any credential entry");
+            if (!credentials) throw new Error("could not locate any credential entry");
 
             credentials.forEach(([key, property]) => {
                 let parsed_cred = property.toHuman()[0];

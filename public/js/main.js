@@ -282,7 +282,7 @@ function click(attr) {
 }
 
 // to prevent duplicate additiom of values
-let ptype_buffer = ["address of property", "size of property"];
+let ptype_buffer = ["Address of property", "Size of property"];
 let pseudo_buffer = ["address of property", "size of property"];
 
 // intialize connection to chain
@@ -326,6 +326,7 @@ document.body.addEventListener(
                 for (var i = 0; i < ptype_buffer.length; i++) {
                     if (ptype_buffer[i] == attrElement.innerText)
                         ptype_buffer.splice(i, 1);
+                    pseudo_buffer.splice(i, 1);
                 };
 
                 attrElement.parentElement.removeChild(attrElement);
@@ -377,7 +378,7 @@ document.body.addEventListener(
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            "name": name
+                            "name": name 
                         })
                     })
                         .then(res => {
@@ -540,7 +541,8 @@ document.body.addEventListener(
                         },
                         body: JSON.stringify({
                             "property_id": propertID,
-                            "recipient": substrateAddr
+                            "recipient": substrateAddr,
+                            "nonce": getSessionNonce()
                         })
                     })
                         .then(res => {
@@ -566,6 +568,74 @@ document.body.addEventListener(
                 } else {
                     toast(`❌ please fill in all the input areas.`)
                 }
+            } else if (e.classList.contains("search-pdoc-btn-before")) {
+                let propertID = qs(".input-for-signature").value;
+                if (propertID) {
+                    hide(".search-pdoc-btn-before");
+                    appear(".search-pdoc-btn-after");
+
+                    // fetch specific document from IPFS
+                    fetch("/fetch-property", {
+                        method: 'post',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            "property_id": propertID,
+                        })
+                    })
+                        .then(res => {
+                            (async function () {
+                                await res.json().then(res => {
+                                    appear(".document-sig-indicator");
+                                    appear(".document-sig-container");
+                                    appear(".search-pdoc-btn-before");
+                                    hide(".search-pdoc-btn-after");
+
+                                    qs(".sig-document-title").innerText = res.data.title;
+                                    qs(".sig-document-title").dataset.pid = propertID;
+                                    qs(".property-claimer").innerText = res.data.owner;
+
+                                    let div = qs(".document-sig-body");
+                                    div.innerHTML = "";
+                                    Object.entries(res.data.attr).forEach(([k, v]) => {
+                                        div.innerHTML += `
+                                            <div class="mb-3 col-6">
+                                                <label for="size of property" class="form-label">${k}</label>
+                                                <input type="text"
+                                                    class="form-control form-control-sm sig-document-properties"
+                                                    id="" placeholder="" value="${v}" disabled>
+                                            </div>
+                                        `;
+                                    })
+                                });
+                            })();
+                        })
+                } else {
+                    toast(`❌ please fill in a valid property ID.`);
+                }
+            }  else if (e.classList.contains("sign-document-btn-before")) {
+                hide(".sign-document-btn-before");
+                appear(".sign-document-btn-after");
+                qs(".search-pdoc-btn-before").disabled = true;
+
+                // fetch specific document from IPFS
+                fetch("/sign-claim", {
+                    method: 'post',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "property_id": propertID,
+                    })
+                })
+                    .then(res => {
+                        (async function () {
+                            await res.json().then(res => {
+                               console.log(res);
+                            });
+                        })();
+                    })
             }
         } else {
             toast(`waiting to connect to the <code>Property Oracle</code> and <code>KILT</code> chain.`);

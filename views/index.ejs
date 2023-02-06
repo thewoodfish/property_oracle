@@ -52,9 +52,8 @@
                                 aria-selected="false">
                                 Create property type
                             </button>
-                            <button class="nav-link" id="nav-sign-tab" data-bs-toggle="tab"
-                                data-bs-target="#nav-disabled" type="button" role="tab" aria-controls="nav-sign"
-                                aria-selected="false">
+                            <button class="nav-link" id="nav-sign-tab" data-bs-toggle="tab" data-bs-target="#nav-sign"
+                                type="button" role="tab" aria-controls="nav-sign" aria-selected="false">
                                 Enforce property claim
                             </button>
                             <button class="nav-link" id="nav-keys-tab" data-bs-toggle="tab" data-bs-target="#nav-keys"
@@ -261,7 +260,8 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div>
-                                            <div class="alert alert-success property-transfer-success hidden" role="alert">
+                                            <div class="alert alert-success property-transfer-success hidden"
+                                                role="alert">
                                                 ✅ Your property has been successfully transferred!
                                             </div>
                                             <div class="alert alert-danger property-transfer-error hidden" role="alert">
@@ -304,9 +304,73 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="nav-disabled" role="tabpanel" aria-labelledby="nav-disabled-tab"
+                        <div class="tab-pane fade" id="nav-sign" role="tabpanel" aria-labelledby="nav-sign-tab"
                             tabindex="4">
-                            ...
+                            <div class="pt-10">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div>
+                                            <p>
+                                                This is equivalent to a physical document signature. The property claim
+                                                can be signed by anyone as a witness. But it only becomes potent and
+                                                solid when it is the signed by the right authority e.g the governors
+                                                office.
+                                            </p>
+                                        </div>
+                                        <code>Please input a valid property ID:</code>
+                                        <div class="pt-10">
+                                            <form class="row g-3">
+                                                <div class="col-auto width-50">
+                                                    <!-- <label for="attr" class="visually-hidden">attr</label> -->
+                                                    <input type="text" class="form-control input-for-signature"
+                                                        placeholder="0x829f65744b2nd5742cec908a6cf3bfe4f3c19c14d5...">
+                                                </div>
+                                                <div class="col-auto">
+                                                    <button class="btn btn-primary mb-3 search-pdoc-btn-before"
+                                                        onclick="return false">Load Document</button>
+                                                    <button class="btn btn-primary search-pdoc-btn-after hidden"
+                                                        type="button" disabled>
+                                                        <span class="spinner-border spinner-border-sm" role="status"
+                                                            aria-hidden="true"></span>
+                                                        Loading...
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <p class="mt-30 document-sig-indicator hidden">Document:</p>
+                                        <div class="mt-10 document-sig-container hidden">
+                                            <div class="card  br-0 shadow">
+                                                <div class="card-body">
+                                                    <p class="center">📑
+                                                        <code class="sig-document-title"></code>
+                                                    </p>
+                                                    <hr>
+                                                    <div>
+                                                        <code
+                                                            class="bold">🧍🏽‍♀️ Property Claimer: <span class="property-claimer"></span></code>
+                                                    </div>
+                                                    <hr>
+                                                    <div class="row pt-10 document-sig-body">
+                                                    </div>
+                                                    <p class="small center color-gray fs-80 mt-30">Property Oracle 2023
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="d-grid gap-2 mt-30 ">
+                                                <button class="btn btn-primary sign-document-btn-before"
+                                                    type="button">✍🏼 Sign
+                                                    Document</button>
+                                                <button class="btn btn-primary sign-document-btn-after hidden"
+                                                    type="button" disabled="">
+                                                    <span class="spinner-border spinner-border-sm" role="status"
+                                                        aria-hidden="true"></span>
+                                                    Signing...
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="tab-pane fade" id="nav-keys" role="tabpanel" aria-labelledby="nav-keys-tab"
                             tabindex="5">
