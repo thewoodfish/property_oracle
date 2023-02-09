@@ -11,3 +11,5 @@ With Property Oracle, nobody can take what is yours and leave you with nothing.
 - The signatures are recorded on the blockchain and timestamped, thereby cementing an individuals claim to the property, from now to eternity. 
 - Properties can be transferred from one individual to the other, e.g from father to son.
 - All these interactions are recorded on the blockchain for transparency and security.
+
+So all in all, even though your physical documents can be duplicated or falsified by scammers, once you record on the blockchain using property oracle and get the right authority to sign it, 😁 YOU ARE SAFE MY FRIEND, FOREVER!
