@@ -15,37 +15,64 @@ import { Keyring } from '@polkadot/keyring';
 // utility functions
 import * as util from "./utility.js";
 
-
 // set up the samaritan test account
 const keyring = new Keyring({ type: 'sr25519' });
 let api = undefined;
 let sam = undefined;
 
 await cryptoWaitReady().then(() => {
-    sam = keyring.createFromUri("shoe urban series connect prize poverty mimic random warm melody fence valid", 'sr25519');
+    // sam = keyring.createFromUri("shoe urban series connect prize poverty mimic random warm melody fence valid", 'sr25519');
+    // sam = keyring.createFromUri("yellow obscure salmon affair extra six bubble clutch fly bread away tired", 'sr25519');
+    sam = keyring.createFromUri("lava couch around wave clog wool old melt delay detail coyote bus", 'sr25519');
 });
 
 export async function connect() {
     try {
         // set up the samaritan test account
-        api = await Kilt.connect('wss://peregrine.kilt.io/parachain-public-ws');
+        // api = await Kilt.connect('wss://peregrine.kilt.io/parachain-public-ws');
+        await Kilt.connect(`wss://peregrine.kilt.io`);
+        api = Kilt.ConfigService.get(`api`);
     } catch (e) {
         return false;
     }
     return true;
 }
 
+export async function getPresentation(
+    credential,
+    mnemonic,
+    selectedAttributes = undefined,
+    challenge = undefined
+) {
+    // get owner did from credential
+    const did = credential.claim.owner;
+    const { authentication, encryption, attestation, delegation } = generateKeypairs(mnemonic);
+
+    let signCallback = useSignCallback(did, authentication);
+
+    // Create a presentation with only the specified fields revealed, if specified.
+    return Kilt.Credential.createPresentation({
+        credential,
+        signCallback,
+        selectedAttributes,
+        challenge,
+    })
+}
 
 export function createClaim(ctype, attr, did) {
-    // The claimer generates the claim they would like to get attested.
-    const claim = Kilt.Claim.fromCTypeAndClaimContents(
-        ctype,
-        attr,
-        did
-    )
+    try {
+        // The claimer generates the claim they would like to get attested.
+        const claim = Kilt.Claim.fromCTypeAndClaimContents(
+            ctype,
+            attr,
+            did
+        )
 
-    const credential = Kilt.Credential.fromClaim(claim);
-    return credential;
+        const credential = Kilt.Credential.fromClaim(claim);
+        return credential;
+    } catch (e) {
+        return false;
+    }
 }
 
 export async function getKiltLightDID(cid) {
@@ -120,7 +147,7 @@ export function generateKeypairs(mnemonic = mnemonicGenerate()) {
         authentication,
         encryption,
         attestation,
-        delegation,
+        delegation
     }
 }
 
@@ -173,4 +200,66 @@ function useSignCallback(keyUri, didSigningKey) {
     })
 
     return signCallback
+}
+
+export async function verifyPresentation(presentation, challenge = undefined) {
+    // Verify the presentation with the provided challenge.
+    let trustedAttesterUris = []
+    console.log(presentation);
+    await Kilt.Credential.verifyPresentation(presentation, { challenge })
+    const attestationChain = await api.query.attestation.attestations(
+        presentation.rootHash
+      )
+    
+      const attestation = Kilt.Attestation.fromChain(
+        attestationChain,
+        presentation.rootHash
+      )
+    
+      if (attestation.revoked) {
+        throw new Error("Credential has been revoked and hence it's not valid.")
+      }
+      if (!trustedAttesterUris.includes(attestation.owner)) {
+        throw `Credential was issued by ${attestation.owner} which is not in the provided list of trusted attesters: ${trustedAttesterUris}.`
+      }
+}
+
+export async function createAttestation(
+    attester,
+    mnemonic,
+    credential
+) {
+    const { authentication, encryption, attestation, delegation } = generateKeypairs(mnemonic);
+        const { cTypeHash, claimHash, delegationId } = Kilt.Attestation.fromCredentialAndDid(credential, attester);
+
+
+        console.log(cTypeHash + " --- " + claimHash);
+
+        // create signCallback
+        let signCallback = useSignCallback(attester, attestation);
+
+        // Write the attestation info on the chain.
+        const attestationTx = api.tx.attestation.add(
+            claimHash,
+            cTypeHash,
+            delegationId
+        )
+
+        const authorizedAttestationTx = await Kilt.Did.authorizeTx(
+            attester,
+            attestationTx,
+            signCallback,
+            sam.address
+        );
+
+        await Kilt.Blockchain.signAndSubmitTx(
+            authorizedAttestationTx,
+            sam
+        );
+
+    //     return true;
+    // } catch (e) {
+    //     return false;
+    // }
+
 }

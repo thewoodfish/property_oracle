@@ -17,17 +17,14 @@
             <div class="py-5 col-9">
                 <div>
                     <h1 class="h2">🏡 Property Oracle<span class="beta-mark">beta</span></h1>
-                    <p>
-                        Property Oracle is a blockchain solution built on
-                        <a href="https://substrate.io">substrate</a> and <a href="https://kilt.io">kilt</a> that helps
-                        people
-                        possess
-                        undisputed claims and accesses to their various properties.
+                    <p class="mt-20">
+                        Property Oracle is a blockchain solution, built on
+                        <a target="_blank" href="https://substrate.io">substrate</a> and <a target="_blank" href="https://kilt.io">kilt</a>, that helps
+                        people like you and me possess undisputed ownership and claim of their properties e.g a plot of land.<br>
+                        With Property Oracle, nobody can take what is yours and leave you with nothing.
                     </p>
-                    <p>
-                        Once you're ready, let's make sure that property of yours stays yours.
-                    </p>
-                    <p>Thanks! <span class="text-danger">♥</span></p>
+                    <p>It is very easy to use. To understand more, <a target="_blank" href="https://github.com/thewoodfish/property_oracle">visit here</a>.</p>
+                    <p>Please try it out. Thanks! <span class="text-danger">♥</span></p>
                 </div>
                 <div class="container pl-0">
                     <nav>
@@ -36,6 +33,11 @@
                                 data-bs-target="#nav-search" type="button" role="tab" aria-controls="nav-search"
                                 aria-selected="true">
                                 Search for property
+                            </button>
+                            <button class="nav-link" id="nav-contact-tab" data-bs-toggle="tab"
+                                data-bs-target="#nav-contact" type="button" role="tab" aria-controls="nav-contact"
+                                aria-selected="false">
+                                Create property type
                             </button>
                             <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab"
                                 data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile"
@@ -47,14 +49,14 @@
                                 aria-selected="false">
                                 Transfer property
                             </button>
-                            <button class="nav-link" id="nav-contact-tab" data-bs-toggle="tab"
-                                data-bs-target="#nav-contact" type="button" role="tab" aria-controls="nav-contact"
-                                aria-selected="false">
-                                Create property type
-                            </button>
                             <button class="nav-link" id="nav-sign-tab" data-bs-toggle="tab" data-bs-target="#nav-sign"
                                 type="button" role="tab" aria-controls="nav-sign" aria-selected="false">
                                 Enforce property claim
+                            </button>
+                            <button class="nav-link" id="nav-enquire-tab" data-bs-toggle="tab"
+                                data-bs-target="#nav-enquire" type="button" role="tab" aria-controls="nav-enquire"
+                                aria-selected="false">
+                                Enquire
                             </button>
                             <button class="nav-link" id="nav-keys-tab" data-bs-toggle="tab" data-bs-target="#nav-keys"
                                 type="button" role="tab" aria-controls="nav-keys" aria-selected="false">
@@ -69,10 +71,13 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div>
+                                            <div class="alert alert-danger prop-search-error hidden" role="alert">
+                                                ❌ No results found.
+                                            </div>
                                             <p>
-                                                Search for any property document or claim. You can search by property
-                                                document title or specifically for properties belonging to an
-                                                individual.
+                                                Search for any property document or claim. You can search by <code>property
+                                                document title</code> or specifically for properties belonging to an
+                                                individual using their <code>substrate address</code>.
                                             </p>
                                         </div>
                                         <code>Please select your filter. Search by:</code>
@@ -143,10 +148,13 @@
                                         <div class="alert alert-success document-reg-success hidden" role="alert">
                                             ✅ Your document has been successfully recorded on the blockchain!
                                         </div>
+                                        <div class="alert alert-danger document-reg-error hidden" role="alert">
+                                            ❌ Could not load complete operation. Please try again Later.
+                                        </div>
                                         <div>
                                             <p> These documents helps provide an unforgeable copy of the claim to your
                                                 property as soon as they are signed by the right authorities.
-                                                What property document do you need to cement your claim to your
+                                                What document do you need to cement ownership of your
                                                 property?
                                             </p>
                                         </div>
@@ -203,21 +211,25 @@
                                             <div class="alert alert-success ptype-reg-success hidden" role="alert">
                                                 ✅ Your property type has been recorded successfully on the blockchain!
                                             </div>
+                                            <div class="alert alert-danger ptype-reg-error hidden" role="alert">
+                                                ❌ Could not create property type. Please try again Later.
+                                            </div>
                                             <p>
                                                 Properties differ and only you know what requirements and
-                                                attributes must be present for a property to be claimed,
-                                                registered or allotted.
+                                                attributes must be present for a property to be registered,
+                                                claimed and considered valid. Please create a property type below and
+                                                state the important informations that must be present in the document.
                                             </p>
                                         </div>
                                         <div class="">
-                                            <code>Name of property registry document e.g Land registry document for Florida LGA.
+                                            <code>Title of property registry document e.g Monaco LGA Land Deed.
                                                 </code>
                                         </div>
                                         <div class="pb-20 pt-10">
                                             <form class="row g-3">
                                                 <div class="col-auto width-50">
                                                     <input type="text" class="form-control doc-title-field"
-                                                        placeholder="name of document">
+                                                        placeholder="title of document">
                                                 </div>
                                             </form>
                                         </div>
@@ -310,10 +322,16 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div>
+                                            <div class="alert alert-success document-sig-success hidden" role="alert">
+                                                ✅ You have successfully signed the document.
+                                            </div>
+                                            <div class="alert alert-danger document-sig-error hidden" role="alert">
+
+                                            </div>
                                             <p>
                                                 This is equivalent to a physical document signature. The property claim
                                                 can be signed by anyone as a witness. But it only becomes potent and
-                                                solid when it is the signed by the right authority e.g the governors
+                                                valid when it is the signed by the right authority e.g the governors
                                                 office.
                                             </p>
                                         </div>
@@ -378,9 +396,13 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div>
+                                            <div class="alert alert-danger mnemonic-error-text hidden" role="alert">
+                                                ❌ An error occurred. Please try again later.
+                                            </div>
                                             <p>
-                                                Mnemonics helps to authenticate and perform many operations on
-                                                <code>Property Oracle</code>. Each is unique per individual. Please keep
+                                                Mnemonics help authenticate and perform many operations on
+                                                <code>Property Oracle</code>. Each is unique per individual.<br> Please
+                                                keep
                                                 them very save and private!
                                             </p>
                                         </div>
@@ -417,6 +439,76 @@
                                                     This is your <a href="wiki.com">DID</a>:
                                                     <div class="mnemonics bold">
                                                         <code class="kilt-did-result"></code>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="nav-enquire" role="tabpanel" aria-labelledby="nav-keys-tab"
+                            tabindex="5">
+                            <div class="pt-10">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div>
+                                            <div class="alert alert-danger enquiry-error hidden" role="alert">
+                                                ❌ Could not complete query. Please check your input or try again later.
+                                            </div>
+                                            <p>
+                                                This is the most important feature of <code>Property Oracle</code>. <br>
+                                                Here you are given crucial information about a property e.g its real owner.
+                                                The results are <code class="green">100% accurate</code>, void of any
+                                                errors.
+                                            </p>
+                                        </div>
+                                        <code>Please input a valid property ID:</code>
+                                        <div class="pt-10">
+                                            <form class="row g-3">
+                                                <div class="col-auto width-50">
+                                                    <!-- <label for="attr" class="visually-hidden">attr</label> -->
+                                                    <input type="text" class="form-control pid-for-enquiry"
+                                                        placeholder="0x829f65744b2nd5742cec908a6cf3bfe4f3c19c14d5...">
+                                                </div>
+                                                <div class="col-auto">
+                                                    <button class="btn btn-primary mb-3 make-enquiry-btn-before"
+                                                        onclick="return false">Make Enquiry</button>
+                                                    <button class="btn btn-primary make-enquiry-btn-after hidden"
+                                                        type="button" disabled>
+                                                        <span class="spinner-border spinner-border-sm" role="status"
+                                                            aria-hidden="true"></span>
+                                                        Processing request...
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="enquiry-container">
+                                            <div class="card hidden negative-verdict">
+                                                <div class="card-body fs-80">
+                                                    <p><code>Property ID: <span class="prop-id"></span></code></p>
+                                                    <p><code>Claimer ID: <span class="claimer-id"></span></code></p>
+                                                    <p class="bold">Verdict: The claim to the property has not been
+                                                        confirmed by the right authority, hence the claim is invalid and
+                                                        can be disputed.</p>
+                                                    <div class="enquiry-details bold">
+                                                        <code class="">
+                                                        </code>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="card hidden positive-verdict">
+                                                <div class="card-body bold fs-80">
+                                                    <p><code>Property ID: <span class="prop-id"></span></code></p>
+                                                    <p><code>Claimer ID: <span class="claimer-id"></span></code></p>
+                                                    <p class="bold">Verdict: The property rightfully belongs to the
+                                                        claimer. It was confirmed by the right authority on
+                                                        <code><span class="verdict-datetime"></span></code>.
+                                                    </p>
+                                                    <div class="enquiry-details bold">
+                                                        <code class="">
+                                                        </code>
                                                     </div>
                                                 </div>
                                             </div>
@@ -505,8 +597,8 @@
     </div>
 
     <!-- footer  -->
-    <div class="copy-right mt-10 center">
-        <!-- <code>Copyright (c) Algorealm 2023. All rights reserved</code> -->
+    <div class="footer mt-10 center">
+        <code>[[A work of Art] <a target="_blank" href="https://twitter.com/thewoodfish">@thewoodfish</a>]. Copyright (c) 2023. All rights reserved</code>
     </div>
 
     <!-- important JS files  -->

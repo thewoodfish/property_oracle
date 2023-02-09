@@ -29,7 +29,8 @@ function appear(attr) {
 }
 
 function hide(attr) {
-    qs(attr).classList.add("hidden");
+    if (!qs(attr).classList.contains("hidden"))
+        qs(attr).classList.add("hidden");
 }
 
 function generateRandomNumber() {
@@ -83,26 +84,25 @@ async function queryServerToSignIn(seed, rollup) {
             "keys": seed    // can be seed or nonce
         })
     })
-        .then(res => {
-            (async function () {
-                await res.json().then(res => {
-                    if (!res.error) {
-                        clearField(".seed-phrase-ta");
-                        setSessionNonce(res.data.nonce);
-                        updateAuthUser(res.data.did, res.data.name);
-                        hide(".sign-in-btn-after");
-                        appear(".sign-in-btn-before");
-                        toast(`Hey <code>${getFirstName(res.data.name)}</code>, Welcome to <code>Property Oracle</code>`);
+        .then(async res => {
+            await res.json().then(res => {
+                if (!res.error) {
+                    clearField(".seed-phrase-ta");
+                    setSessionNonce(res.data.nonce);
+                    updateAuthUser(res.data.did, res.data.name);
+                    hide(".sign-in-btn-after");
+                    appear(".sign-in-btn-before");
+                    toast(`Hey <code>${getFirstName(res.data.name)}</code>, Welcome to <code>Property Oracle</code>`);
 
-                        // roll up the card
-                        if (rollup) click(".sign-in-prompt");
-                    } else {
-                        toast("❌ Could not sign you in. Please check your seed.");
-                        hide(".sign-in-btn-after");
-                        appear(".sign-in-btn-before");
-                    }
-                });
-            })()
+                    // roll up the card
+                    if (rollup) click(".sign-in-prompt");
+                } else {
+                    toast("❌ Could not sign you in. Please check your seed.");
+                    hide(".sign-in-btn-after");
+                    appear(".sign-in-btn-before");
+                }
+            });
+
         })
 }
 
@@ -152,22 +152,21 @@ async function populatePropertyTitles() {
             'Content-Type': 'application/json'
         }
     })
-        .then(res => {
-            (async function () {
-                await res.json().then(res => {
-                    // populate UI
-                    let select = qs(".document-type-selector");
-                    res.data.forEach(p => {
-                        select.innerHTML += `<option value="${p.title}$$$${p.cid}$$$${p.attr}$$$${p.key}">${p.title}</option>`;
-                    });
-
-                    // populate UI of type selector
-                    let select1 = qs(".property-type-selector");
-                    res.data.forEach(p => {
-                        select1.innerHTML += `<option value="${p.title}">${p.title}</option>`;
-                    });
+        .then(async res => {
+            await res.json().then(res => {
+                // populate UI
+                let select = qs(".document-type-selector");
+                res.data.forEach(p => {
+                    select.innerHTML += `<option value="${p.title}$$$${p.cid}$$$${p.attr}$$$${p.key}">${p.title}</option>`;
                 });
-            })();
+
+                // populate UI of type selector
+                let select1 = qs(".property-type-selector");
+                res.data.forEach(p => {
+                    select1.innerHTML += `<option value="${p.title}">${p.title}</option>`;
+                });
+            });
+            ;
         })
 }
 
@@ -182,29 +181,32 @@ async function populateProperties(value, type) {
             value, type
         })
     })
-        .then(res => {
-            (async function () {
-                await res.json().then(res => {
-                    // first enable the select box
-                    qs(".property-search-filter").disabled = false;
+        .then(async res => {
+            await res.json().then(res => {
+                // first enable the select box
+                qs(".property-search-filter").disabled = false;
 
-                    // change the buttons
-                    const index = qs(".property-search-filter").dataset.index;
-                    hide(`.property-search${index}-btn-after`);
-                    appear(`.property-search${index}-btn-before`);
+                // change the buttons
+                const index = qs(".property-search-filter").dataset.index;
+                hide(`.property-search${index}-btn-after`);
+                appear(`.property-search${index}-btn-before`);
 
+                let cc = qs(".credential-container");
+                cc.innerHTML = "";
+                if (!res.error) {
                     // update the UI
                     let i = 0;
-                    let cc = qs(".credential-container");
-                    cc.innerHTML = "";
-
                     res.data.forEach(p => {
                         i++;
 
                         // prepare the verifiers
                         let verifiers = "";
                         p.verifiers.forEach(v => {
-                            verifiers += `<div>${v}</div>`;
+                            console.log(p.ptype_registrar);
+                            if (p.ptype_registrar == v)
+                                verifiers += `<div>⭐️ ${v}</div>`;
+                            else
+                                verifiers += `<div>${v}</div>`;
                         })
                         cc.innerHTML += `
                         <hr>
@@ -243,8 +245,11 @@ async function populateProperties(value, type) {
                         </div> 
                     `;
                     });
-                });
-            })();
+                } else {
+                    appear(".prop-search-error");
+                    setTimeout(() => hide(".prop-search-error"), 5000);
+                }
+            });
         })
 }
 
@@ -261,15 +266,14 @@ async function initChainConnection(addr) {
                 "addr": addr
             })
         })
-            .then(res => {
-                (async function () {
-                    await res.json().then(async res => {
-                        // if nonce is still present, sign user in automatically
-                        if (getSessionNonce())
-                            await queryServerToSignIn(getSessionNonce(), false);      // roll up the card
-                        resolve(res.status);
-                    });
-                })();
+            .then(async res => {
+                await res.json().then(async res => {
+                    // if nonce is still present, sign user in automatically
+                    if (getSessionNonce())
+                        await queryServerToSignIn(getSessionNonce(), false);      // roll up the card
+                    resolve(res.status);
+                });
+                ;
             })
     });
 
@@ -286,8 +290,9 @@ let ptype_buffer = ["Address of property", "Size of property"];
 let pseudo_buffer = ["address of property", "size of property"];
 
 // intialize connection to chain
+
+toast(`waiting to connect to the <code>Property Oracle</code> and <code>KILT</code> chain.`);
 (async function () {
-    toast(`waiting to connect to the <code>Property Oracle</code> and <code>KILT</code> chain.`);
     if (await initChainConnection('ws://127.0.0.1:9944') == "connected") {
         // update UI
         await populatePropertyTitles();   // populate the document titles
@@ -312,7 +317,8 @@ document.body.addEventListener(
                 if (field_val) {
                     if (!pseudo_buffer.includes(field_val.toLowerCase())) {
                         let attr_display = qs(".attr-display");
-                        attr_display.innerHTML += `<p class="xy-${code}"><code><span class="xx-${code} minus blue pointer">-</span> ${field_val}</code></p>`;
+                        attr_display.innerHTML += `<p class="xy-${code}"><code><span class="xx-${code} minus blue pointer">-</span> 
+                            <span class="zz-${code}">${field_val}</span></code></p>`;
                         clearField(".attr-field");
                         ptype_buffer.push(field_val);
                         pseudo_buffer.push(field_val.toLowerCase());
@@ -322,16 +328,23 @@ document.body.addEventListener(
             } else if (e.classList.contains("minus")) {
                 // delete specified attribute
                 let attrElement = qs(`.xy-${e.classList[0].split('-')[1]}`);
+                let innerText = qs(`.zz-${e.classList[0].split('-')[1]}`).innerText;
 
                 for (var i = 0; i < ptype_buffer.length; i++) {
-                    if (ptype_buffer[i] == attrElement.innerText)
+                    if (ptype_buffer[i] == innerText) {
                         ptype_buffer.splice(i, 1);
-                    pseudo_buffer.splice(i, 1);
+                        pseudo_buffer.splice(i, 1);
+                    }
                 };
 
                 attrElement.parentElement.removeChild(attrElement);
             } else if (e.classList.contains("reg-property-before")) {
                 let title = qs(".doc-title-field").value;
+                if (!qs(".doc-title-field").value) {
+                    toast(`❌ Please specify the title of the document.`)
+                    return;
+                }
+
                 if (ptype_buffer.length > 2) {
                     if (userIsAuth()) {
                         hide(".reg-property-before");
@@ -349,21 +362,26 @@ document.body.addEventListener(
                                 "nonce": getSessionNonce()
                             })
                         })
-                            .then(res => {
-                                (async function () {
-                                    await res.json().then(res => {
-                                        hide(".reg-property-after");
-                                        appear(".reg-property-before");
+                            .then(async res => {
+                                await res.json().then(res => {
+                                    hide(".reg-property-after");
+                                    appear(".reg-property-before");
+
+                                    if (!res.error) {
                                         appear(".ptype-reg-success");
                                         clearField(".doc-title-field");
                                         setTimeout(() => hide(".ptype-reg-success"), 5000);
                                         populatePropertyTitles();
-                                    });
-                                })();
+                                    } else {
+                                        appear(".ptype-reg-error");
+                                        setTimeout(() => hide(".ptype-reg-error"), 5000);
+                                    }
+                                });
+                                ;
                             })
                     }
                 } else {
-                    toast(`❌ You need to specify more attributes`);
+                    toast(`❌ You need to specify more attributes.`);
                 }
             } else if (e.classList.contains("gen-mnemonics-before")) {
                 const name = qs(".pseudo-name").value;
@@ -378,18 +396,17 @@ document.body.addEventListener(
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            "name": name 
+                            "name": name
                         })
                     })
-                        .then(res => {
-                            (async function () {
-                                await res.json().then(res => {
+                        .then(async res => {
+                            await res.json().then(res => {
+                                hide(".gen-mnemonics-after");
+                                appear(".gen-mnemonics-before");
+
+                                if (!res.error) {
                                     const did = res.data.did.split(`:`, 4).join(`:`);
-
                                     clearField(".pseudo-name");
-                                    hide(".gen-mnemonics-after");
-                                    appear(".gen-mnemonics-before");
-
                                     appear(".mnemonics-container");
                                     toast(`You have <code class="bold">10 seconds</code> to copy your keys`);
 
@@ -402,8 +419,12 @@ document.body.addEventListener(
 
                                     // set timeout to remove div
                                     setTimeout(() => hide(".mnemonics-container"), 10000);
-                                });
-                            })();
+                                } else {
+                                    appear(".mnemonic-error-text");
+                                    setTimeout(() => hide(".mnemonic-error-text"), 5000);
+                                }
+                            });
+                            ;
                         })
                 } else {
                     toast(`❌ Please fill in you name to continue`);
@@ -451,23 +472,27 @@ document.body.addEventListener(
                                 "nonce": getSessionNonce()
                             })
                         })
-                            .then(res => {
-                                (async function () {
-                                    await res.json().then(res => {
+                            .then(async res => {
+                                await res.json().then(res => {
+                                    hide(".submit-filled-document-after");
+                                    appear(".submit-filled-document-before");
+
+                                    if (!res.error) {
                                         appear(".document-reg-success");
                                         setTimeout(() => hide(".document-reg-success"), 5000);
                                         hide(".document-indicator");
                                         hide(".property-document-container");
                                         qs(".document-property-body").innerHTML = "";
 
-                                        hide(".submit-filled-document-after");
-                                        appear(".submit-filled-document-before");
-
-                                    });
-                                })();
+                                    } else {
+                                        appear(".document-reg-error");
+                                        setTimeout(() => hide(".document-reg-error"), 5000);
+                                    }
+                                });
+                                ;
                             })
                     } else {
-                        toast(`❌ please fill out all fields in the document.`);
+                        toast(`❌ Please fill out all fields of the document.`);
                     }
                 }
             } else if (e.classList.contains("property-search0-btn-before")) {
@@ -490,7 +515,8 @@ document.body.addEventListener(
                 if (qs(".property-type-selector").value != "zero") {
                     hide(".property-search1-btn-before");
                     appear(".property-search1-btn-after");
-
+                    clearField(".substrate-address-input");
+                    
                     // disable filter
                     qs(".property-search-filter").disabled = true;
                     qs(".property-search-filter").dataset.index = "1";
@@ -511,21 +537,20 @@ document.body.addEventListener(
                         "cid": e.dataset.cid
                     })
                 })
-                    .then(res => {
-                        (async function () {
-                            await res.json().then(res => {
-                                let div = e.parentElement;
-                                div.innerHTML = "";
+                    .then(async res => {
+                        await res.json().then(res => {
+                            let div = e.parentElement;
+                            div.innerHTML = "";
 
-                                Object.entries(res.data).forEach(([k, v]) => {
-                                    div.innerHTML += `
+                            Object.entries(res.data).forEach(([k, v]) => {
+                                div.innerHTML += `
                                         <div>
                                             <code>${k}:</code> <span>${v}</span>
                                         </div>
                                     `;
-                                })
-                            });
-                        })();
+                            })
+                        });
+                        ;
                     })
             } else if (e.classList.contains("transfer-property-btn-before")) {
                 const propertID = qs(".property-id").value;
@@ -545,25 +570,24 @@ document.body.addEventListener(
                             "nonce": getSessionNonce()
                         })
                     })
-                        .then(res => {
-                            (async function () {
-                                await res.json().then(res => {
-                                    if (!res.error) {
-                                        appear(".property-transfer-success");
-                                        setTimeout(() => hide(".property-transfer-success"), 5000);
+                        .then(async res => {
+                            await res.json().then(res => {
+                                appear(".transfer-property-btn-before");
+                                hide(".transfer-property-btn-after");
 
-                                        clearField(".sub-address");
-                                        clearField(".property-id");
-                                    } else {
-                                        qs(".main-error-text").innerText = res.data.msg;
-                                        appear(".property-transfer-error");
-                                        setTimeout(() => hide(".property-transfer-error"), 5000);
-                                    }
+                                if (!res.error) {
+                                    appear(".property-transfer-success");
+                                    setTimeout(() => hide(".property-transfer-success"), 5000);
 
-                                    appear(".transfer-property-btn-before");
-                                    hide(".transfer-property-btn-after");
-                                });
-                            })();
+                                    clearField(".sub-address");
+                                    clearField(".property-id");
+                                } else {
+                                    qs(".main-error-text").innerText = `Could not transfer property. Please check your input or try again later`;
+                                    appear(".property-transfer-error");
+                                    setTimeout(() => hide(".property-transfer-error"), 5000);
+                                }
+                            });
+                            ;
                         })
                 } else {
                     toast(`❌ please fill in all the input areas.`)
@@ -584,14 +608,14 @@ document.body.addEventListener(
                             "property_id": propertID,
                         })
                     })
-                        .then(res => {
-                            (async function () {
-                                await res.json().then(res => {
+                        .then(async res => {
+                            await res.json().then(res => {
+                                appear(".search-pdoc-btn-before");
+                                hide(".search-pdoc-btn-after");
+
+                                if (!res.error) {
                                     appear(".document-sig-indicator");
                                     appear(".document-sig-container");
-                                    appear(".search-pdoc-btn-before");
-                                    hide(".search-pdoc-btn-after");
-
                                     qs(".sig-document-title").innerText = res.data.title;
                                     qs(".sig-document-title").dataset.pid = propertID;
                                     qs(".property-claimer").innerText = res.data.owner;
@@ -600,24 +624,32 @@ document.body.addEventListener(
                                     div.innerHTML = "";
                                     Object.entries(res.data.attr).forEach(([k, v]) => {
                                         div.innerHTML += `
-                                            <div class="mb-3 col-6">
-                                                <label for="size of property" class="form-label">${k}</label>
-                                                <input type="text"
-                                                    class="form-control form-control-sm sig-document-properties"
-                                                    id="" placeholder="" value="${v}" disabled>
-                                            </div>
-                                        `;
+                                                <div class="mb-3 col-6">
+                                                    <label for="size of property" class="form-label">${k}</label>
+                                                    <input type="text"
+                                                        class="form-control form-control-sm sig-document-properties"
+                                                        id="" placeholder="" value="${v}" disabled>
+                                                </div>
+                                            `;
                                     })
-                                });
-                            })();
+                                } else {
+                                    hide(".document-sig-indicator");
+                                    hide(".document-sig-container");
+                                    qs(".document-sig-error").innerText = `❌ Could not locate property claim. Please check your input.`;
+                                    appear(".document-sig-error");
+                                    setTimeout(() => hide(".document-sig-error"), 5000);
+                                }
+                            });
+                            ;
                         })
                 } else {
                     toast(`❌ please fill in a valid property ID.`);
                 }
-            }  else if (e.classList.contains("sign-document-btn-before")) {
+            } else if (e.classList.contains("sign-document-btn-before")) {
                 hide(".sign-document-btn-before");
                 appear(".sign-document-btn-after");
                 qs(".search-pdoc-btn-before").disabled = true;
+                let propertID = qs(".input-for-signature").value;
 
                 // fetch specific document from IPFS
                 fetch("/sign-claim", {
@@ -627,15 +659,82 @@ document.body.addEventListener(
                     },
                     body: JSON.stringify({
                         "property_id": propertID,
+                        "nonce": getSessionNonce()
                     })
                 })
-                    .then(res => {
-                        (async function () {
-                            await res.json().then(res => {
-                               console.log(res);
-                            });
-                        })();
+                    .then(async res => {
+                        await res.json().then(res => {
+                            appear(".sign-document-btn-before");
+                            hide(".sign-document-btn-after");
+                            qs(".search-pdoc-btn-before").disabled = false;
+
+                            if (!res.error) {
+                                clearField(".input-for-signature");
+                                hide(".document-sig-indicator");
+                                hide(".document-sig-container");
+
+                                appear(".document-sig-success");
+                                setTimeout(() => hide(".document-sig-success"), 5000);
+                            } else {
+                                qs(".document-sig-error").innerText = `❌ Could not append signature. Please try again later`;
+                                appear(".document-sig-error");
+                                setTimeout(() => hide(".document-sig-error"), 5000);
+                            }
+                        });
+                        ;
                     })
+            } else if (e.classList.contains("make-enquiry-btn-before")) {
+                let propertID = qs(".pid-for-enquiry").value;
+                if (propertID) {
+                    hide(".make-enquiry-btn-before");
+                    appear(".make-enquiry-btn-after");
+
+                    // fetch specific document from IPFS
+                    fetch("/enquire", {
+                        method: 'post',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            "property_id": propertID,
+                        })
+                    })
+                        .then(async res => {
+                            await res.json().then(res => {
+                                appear(".make-enquiry-btn-before");
+                                hide(".make-enquiry-btn-after");
+
+                                if (!res.error) {
+                                    clearField(".pid-for-enquiry");
+
+                                    qsa(".prop-id").forEach(p => {
+                                        p.innerText = propertID;
+                                    });
+
+                                    qsa(".claimer-id").forEach(p => {
+                                        p.innerText = res.data.claimer;
+                                    });
+
+                                    if (res.data.isValid) {
+                                        appear(".positive-verdict");
+                                        hide(".negative-verdict");
+                                        qs(".verdict-datetime").innerText = convertTimestamp(res.data.timestamp.replaceAll(',', ''));
+                                    } else {
+                                        hide(".positive-verdict");
+                                        appear(".negative-verdict");
+                                    }
+                                } else {
+                                    hide(".negative-verdict");
+                                    hide(".positive-verdict");
+                                    appear(".enquiry-error");
+                                    setTimeout(() => hide(".enquiry-error"), 5000);
+                                }
+                            });
+                            ;
+                        })
+                } else {
+                    toast(`❌ please fill in a valid property ID.`);
+                }
             }
         } else {
             toast(`waiting to connect to the <code>Property Oracle</code> and <code>KILT</code> chain.`);

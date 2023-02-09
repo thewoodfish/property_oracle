@@ -1,3 +1,10 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 body {
     padding-bottom: 60px;
     background-color: azure;
@@ -263,4 +270,26 @@ input::-ms-input-placeholder {
 
 .pt-30 {
     padding-top: 30px;
+}
+
+.negative-verdict {
+    background: #ffe6e6;
+}
+
+.positive-verdict {
+    background: #e9fff0;
+}
+
+.footer {
+    position: static;
+    bottom: 0;
+    width: 100%;
+    height: auto;
+    /* background-color: #333; */
+    color: #fff;
+    text-align: center;
+}
+
+.green {
+    color: rgb(7, 212, 7);
 }
