@@ -19,11 +19,14 @@
                     <h1 class="h2">🏡 Property Oracle<span class="beta-mark">beta</span></h1>
                     <p class="mt-20">
                         Property Oracle is a blockchain solution, built on
-                        <a target="_blank" href="https://substrate.io">substrate</a> and <a target="_blank" href="https://kilt.io">kilt</a>, that helps
-                        people like you and me possess undisputed ownership and claim of their properties e.g a plot of land.<br>
+                        <a target="_blank" href="https://substrate.io">substrate</a> and <a target="_blank"
+                            href="https://kilt.io">kilt</a>, that helps
+                        people like you and me possess undisputed ownership and claim of their properties e.g a plot of
+                        land.<br>
                         With Property Oracle, nobody can take what is yours and leave you with nothing.
                     </p>
-                    <p>It is very easy to use. To understand more, <a target="_blank" href="https://github.com/thewoodfish/property_oracle">visit here</a>.</p>
+                    <p>It is very easy to use. To understand more, <a target="_blank"
+                            href="https://github.com/thewoodfish/property_oracle">visit here</a>.</p>
                     <p>Please try it out. Thanks! <span class="text-danger">♥</span></p>
                 </div>
                 <div class="container pl-0">
@@ -458,7 +461,8 @@
                                             </div>
                                             <p>
                                                 This is the most important feature of <code>Property Oracle</code>. <br>
-                                                Here you are given crucial information about a property e.g its real owner.
+                                                Here you are given crucial information about a property e.g its real
+                                                owner.
                                                 The results are <code class="green">100% accurate</code>, void of any
                                                 errors.
                                             </p>
@@ -484,31 +488,42 @@
                                             </form>
                                         </div>
                                         <div class="enquiry-container">
-                                            <div class="card hidden negative-verdict">
-                                                <div class="card-body fs-80">
-                                                    <p><code>Property ID: <span class="prop-id"></span></code></p>
-                                                    <p><code>Claimer ID: <span class="claimer-id"></span></code></p>
-                                                    <p class="bold">Verdict: The claim to the property has not been
-                                                        confirmed by the right authority, hence the claim is invalid and
-                                                        can be disputed.</p>
-                                                    <div class="enquiry-details bold">
-                                                        <code class="">
+                                            <hr>
+                                            <div class="row hidden negative-verdict">
+                                                <div class="col-4 pt-10">
+                                                    <img src="img/verdict.png" class="width-100">
+                                                </div>
+                                                <div class="card hidden negative-verdict border-0">
+                                                    <div class="card-body pt-20">
+                                                        <p><span>Property ID: <span class="prop-id red"></span></span></p>
+                                                        <p><span>Claimer ID: <span class="claimer-id red"></span></span></p>
+                                                        <p class="bold">Verdict: The claim to the property has not been
+                                                            confirmed by the right authority, hence the claim is invalid
+                                                            and
+                                                            can be disputed.</p>
+                                                        <div class="enquiry-details bold">
+                                                            <code class="">
                                                         </code>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            <div class="card hidden positive-verdict">
-                                                <div class="card-body bold fs-80">
-                                                    <p><code>Property ID: <span class="prop-id"></span></code></p>
-                                                    <p><code>Claimer ID: <span class="claimer-id"></span></code></p>
-                                                    <p class="bold">Verdict: The property rightfully belongs to the
-                                                        claimer. It was confirmed by the right authority on
-                                                        <code><span class="verdict-datetime"></span></code>.
-                                                    </p>
-                                                    <div class="enquiry-details bold">
-                                                        <code class="">
-                                                        </code>
+                                            <div class="row hidden positive-verdict">
+                                                <div class="col-4 pt-10">
+                                                    <img src="img/verdict.png" class="width-100">
+                                                </div>
+                                                <div class="col-8 card border-0">
+                                                    <div class="card-body pt-20">
+                                                        <p><span>Property ID: <span class="prop-id green"></span></span></p>
+                                                        <p><span>Claimer ID: <span class="claimer-id green"></span></span></p>
+                                                        <p class="bold">Verdict: The property rightfully belongs to the
+                                                            claimer. It was confirmed by the right authority on
+                                                            <code><span class="verdict-datetime green"></span></code>.
+                                                        </p>
+                                                        <div class="enquiry-details bold">
+                                                            <code class="">
+                                                            </code>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

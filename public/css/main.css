@@ -277,7 +277,7 @@ input::-ms-input-placeholder {
 }
 
 .positive-verdict {
-    background: #e9fff0;
+    /* background: #e9fff0; */
 }
 
 .footer {
@@ -291,5 +291,13 @@ input::-ms-input-placeholder {
 }
 
 .green {
-    color: rgb(7, 212, 7);
+    color: rgb(7, 212, 7) !important;
+}
+
+.red {
+    color: rgb(212, 7, 7) !important;
+}
+
+.border-0 {
+    border: 0 !important;
 }

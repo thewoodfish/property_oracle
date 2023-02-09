@@ -516,7 +516,7 @@ document.body.addEventListener(
                     hide(".property-search1-btn-before");
                     appear(".property-search1-btn-after");
                     clearField(".substrate-address-input");
-                    
+
                     // disable filter
                     qs(".property-search-filter").disabled = true;
                     qs(".property-search-filter").dataset.index = "1";
@@ -688,6 +688,7 @@ document.body.addEventListener(
                 if (propertID) {
                     hide(".make-enquiry-btn-before");
                     appear(".make-enquiry-btn-after");
+                    hide(".enquiry-container");
 
                     // fetch specific document from IPFS
                     fetch("/enquire", {
@@ -703,6 +704,7 @@ document.body.addEventListener(
                             await res.json().then(res => {
                                 appear(".make-enquiry-btn-before");
                                 hide(".make-enquiry-btn-after");
+                                appear(".enquiry-container");
 
                                 if (!res.error) {
                                     clearField(".pid-for-enquiry");

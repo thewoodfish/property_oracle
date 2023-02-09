@@ -136,85 +136,59 @@ app.post('/enquire', (req, res) => {
 // retreive important information to decide the validity of an individuals claim to a property
 async function enquirePropertyClaim(req, res) {
     // get important values
-    let credential_cid = undefined;
-    let pkey = undefined;
-    let claimer = undefined;
     try {
-        let credentials = await api.query.oracle.credentialRegistry.entries();
-        if (!credentials) throw new Error("could not locate any credential entry");
-
         // store verifiers
-        let verifiers = [];
-        let timestamp = undefined;
+        let property = (await getCredentials(req.property_id));
+        let credential_cid = property.credential.cid;
+        let claimer = property.credential.owner;
+        let pkey = property.key;
+        let timestamp = property.credential.timestamp;
+        let verifiers = property.credential.verifiers;
 
-        credentials.forEach(async ([key, property]) => {
-            // now get all entries for the property
-            let realKey = key.toHuman()[0];
-            let creds = (await api.query.oracle.credentialRegistry(realKey)).toHuman();
-            let height = 0;
-            creds.forEach(async c => {
-                if (blake2AsHex(c.cid) == req.property_id) {
-                    c.verifiers.forEach(v => {
-                        verifiers.push(v)
-                    });
+        // get the canonical verifier i.e the registrar of the property type
+        // fetch document type to get the registrar
+        let doc = (await api.query.oracle.propertyTypeRegistry(pkey)).toHuman();
+        if (!doc) throw new Error("could not locate any document type entry");
 
-                    credential_cid = c.cid;
-                    claimer = c.owner;
-                    pkey = key.toHuman()[0];
-                    timestamp = c.timestamp
+        let registrar = doc.registrar;
 
-                    // get the canonical verifier i.e the registrar of the property type
-                    // fetch document type to get the registrar
-                    let doc = (await api.query.oracle.propertyTypeRegistry(pkey)).toHuman();
-                    if (!doc) throw new Error("could not locate any document type entry");
+        // load the cid of the registrar to get its DID document
+        let registrar_cid = (await api.query.oracle.userRegistry(registrar)).toHuman();
+        if (!registrar_cid) throw new Error("could not locate CID of valid user");
 
-                    let registrar = doc.registrar;
+        // query IPFS to get the DID document
+        await storg.getFromIPFS(registrar_cid).then(async data => {
+            let didDoc = JSON.parse(data);
 
-                    // load the cid of the registrar to get its DID document
-                    let registrar_cid = (await api.query.oracle.userRegistry(registrar)).toHuman();
-                    if (!registrar_cid) throw new Error("could not locate CID of valid user");
+            // get the credential from IPFS also
+            await storg.getFromIPFS(credential_cid).then(async cdata => {
+                let cred = JSON.parse(cdata);
 
-                    // query IPFS to get the DID document
-                    await storg.getFromIPFS(registrar_cid).then(async data => {
-                        let didDoc = JSON.parse(data);
+                // create a verifiable presentation from the credential
+                let presentation = await kilt.getPresentation(cred, didDoc.mnemonic);
 
-                        // get the credential from IPFS also
-                        await storg.getFromIPFS(credential_cid).then(async cdata => {
-                            let cred = JSON.parse(cdata);
+                // check validity
+                let isValid1 = kilt.verifyPresentation(presentation);     // KILTs API throws errors here
 
-                            // create a verifiable presentation from the credential
-                            let presentation = await kilt.getPresentation(cred, didDoc.mnemonic);
+                // improvise to check validity
+                let isValid2 = verifiers.includes(registrar);
 
-                            // check validity
-                            // let isValid = kilt.verifyPresentation(presentation);     // KILTs API throws errors here
-
-                            // improvise to check validity
-                            let isValid = verifiers.includes(registrar);
-
-                            // return validity
-                            return res.send({
-                                data: {
-                                    isValid,
-                                    registrar,
-                                    claimer,
-                                    timestamp
-                                },
-                                error: false
-                            });
-                        });
-                    });
-                } else {
-                    if (height == creds.length)
-                        throw new Error("could not find the credential.");
-                }
-
-                height++;
+                // return validity
+                return res.send({
+                    data: {
+                        isValid: isValid1 && isValid2,
+                        registrar,
+                        claimer,
+                        timestamp
+                    },
+                    error: false
+                });
             });
         });
     } catch (e) {
         return res.send({
             data: {
-                claimer
+                claimer: null
             },
             error: true
         });
@@ -223,73 +197,71 @@ async function enquirePropertyClaim(req, res) {
 
 // attest an individuals claim to a property
 async function signPropertyClaim(req, res) {
-    // try {
-    let user = authUser(req.nonce);
-    if (user) {
-        // get cid of property claim
-        let is_signed = false;  //  to prevent double signing
+    try {
+        let user = authUser(req.nonce);
+        if (user) {
+            // get cid of property claim
+            let is_signed = false;  //  to prevent double signing
 
-        let property = (await getCredentials(req.property_id));
-        let cid = property.credential.cid;
-        let pkey = property.key;
+            let property = (await getCredentials(req.property_id));
+            let cid = property.credential.cid;
+            let pkey = property.key;
 
-        property.credential.verifiers.forEach(v => {
-            if (v == /*user.keyPair.address*/ alice.address) 
-                is_signed = true;
-        });
-
-        // get the canonical verifier i.e the registrar of the property type
-        // fetch document type to get the registrar
-        let doc = (await api.query.oracle.propertyTypeRegistry(pkey)).toHuman();
-        if (!doc) throw new Error("could not locate any document type entry");
-
-        if (!is_signed) {
-            // make user has upgraded to having a full DID
-            if (user.did.indexOf("light") != -1)
-                user = await upgradeToFullDid(req.nonce, user);
-
-            // retrieve the KILT claim from IPFSx
-            await storg.getFromIPFS(cid).then(async data => {
-                let claim = JSON.parse(data);
-                // let success = await kilt.createAttestation();     // KILT is throwing errors
-                await kilt.createAttestation(user.did, user.fullDid.mnemonic, claim).catch(e => console.error(e));
-                // let success = true;
-                if (success) {
-                    // save signoatory onchain
-                    const transfer = api.tx.oracle.attestClaim(pkey, cid, doc.registrar == /*user.keyPair.address*/ alice.address);
-                    const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
-                        if (status.isInBlock) {
-                            events.forEach(({ event: { data, method, section }, phase }) => {
-                                // check for errors
-                                if (section.match("system", "i") && data.toString().indexOf("error") != -1) {
-                                    return res.send({
-                                        data: {
-                                            msg: "could not record signature"
-                                        },
-                                        error: true
-                                    })
-                                }
-
-                                if (section.match("oracle", "i")) {
-                                    return res.send({
-                                        data: {},
-                                        error: false
-                                    })
-                                }
-                            })
-                        }
-                    })
-                } else
-                    throw new Error("could not append signature");
+            property.credential.verifiers.forEach(v => {
+                if (v == /*user.keyPair.address*/ alice.address)
+                    is_signed = true;
             });
-        } else throw new Error("could not append signature");
-    } else throw new Error("User not recognized!");
-    // } catch (e) {
-    //     return res.send({
-    //         data: {},
-    //         error: true
-    //     });
-    // }
+
+            // get the canonical verifier i.e the registrar of the property type
+            // fetch document type to get the registrar
+            let doc = (await api.query.oracle.propertyTypeRegistry(pkey)).toHuman();
+            if (!doc) throw new Error("could not locate any document type entry");
+
+            if (!is_signed) {
+                // make user has upgraded to having a full DID
+                if (user.did.indexOf("light") != -1)
+                    user = await upgradeToFullDid(req.nonce, user);
+
+                // retrieve the KILT claim from IPFSx
+                await storg.getFromIPFS(cid).then(async data => {
+                    let claim = JSON.parse(data);
+                    let success = await kilt.createAttestation(user.did, user.fullDid.mnemonic, claim);
+                    if (success) {
+                        // save signoatory onchain
+                        const transfer = api.tx.oracle.attestClaim(pkey, cid, doc.registrar == /*user.keyPair.address*/ alice.address);
+                        const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
+                            if (status.isInBlock) {
+                                events.forEach(({ event: { data, method, section }, phase }) => {
+                                    // check for errors
+                                    if (section.match("system", "i") && data.toString().indexOf("error") != -1) {
+                                        return res.send({
+                                            data: {
+                                                msg: "could not record signature"
+                                            },
+                                            error: true
+                                        })
+                                    }
+
+                                    if (section.match("oracle", "i")) {
+                                        return res.send({
+                                            data: {},
+                                            error: false
+                                        })
+                                    }
+                                })
+                            }
+                        })
+                    } else
+                        throw new Error("could not append signature");
+                });
+            } else throw new Error("could not append signature");
+        } else throw new Error("User not recognized!");
+    } catch (e) {
+        return res.send({
+            data: {},
+            error: true
+        });
+    }
 }
 
 // fetch property from IPFS and return its properties
@@ -341,47 +313,47 @@ async function getCredentials(id) {
 // transfer property to another entity
 async function transferProperty(req, res) {
     // try {
-        let user = authUser(req.nonce);
-        if (user) {
-            // first check for existence/validity of the recipients substrate address
-            let phantom = (await api.query.oracle.userRegistry(req.recipient)).toHuman();
-            if (!phantom) throw new Error("invalid recipient substrate address given!");
+    let user = authUser(req.nonce);
+    if (user) {
+        // first check for existence/validity of the recipients substrate address
+        let phantom = (await api.query.oracle.userRegistry(req.recipient)).toHuman();
+        if (!phantom) throw new Error("invalid recipient substrate address given!");
 
-            // make sure sender != reciever
-            // if (user.address == req.recipient) throw new Error("you cannot transfer to yourself!");
+        // make sure sender != reciever
+        // if (user.address == req.recipient) throw new Error("you cannot transfer to yourself!");
 
-            let property = (await getCredentials(req.property_id));
-            let cid = property.credential.cid;
-            let pkey = property.key;
+        let property = (await getCredentials(req.property_id));
+        let cid = property.credential.cid;
+        let pkey = property.key;
 
-            if (cid && pkey) {
-                // intiate transfer
-                const transfer = api.tx.oracle.transferProperty(req.recipient, pkey, cid);
-                const _ = await transfer.signAndSend(/* user.keyPair */bob, ({ events = [], status }) => {
-                    if (status.isInBlock) {
-                        events.forEach(({ event: { data, method, section }, phase }) => {
-                            // check for errors
-                            if (section.match("system", "i") && data.toString().indexOf("error") != -1) {
-                                return res.send({
-                                    data: {
-                                        msg: "property not found, please check the property id."
-                                    },
-                                    error: true
-                                })
-                            }
+        if (cid && pkey) {
+            // intiate transfer
+            const transfer = api.tx.oracle.transferProperty(req.recipient, pkey, cid);
+            const _ = await transfer.signAndSend(/* user.keyPair */bob, ({ events = [], status }) => {
+                if (status.isInBlock) {
+                    events.forEach(({ event: { data, method, section }, phase }) => {
+                        // check for errors
+                        if (section.match("system", "i") && data.toString().indexOf("error") != -1) {
+                            return res.send({
+                                data: {
+                                    msg: "property not found, please check the property id."
+                                },
+                                error: true
+                            })
+                        }
 
-                            if (section.match("oracle", "i")) {
-                                return res.send({
-                                    data: {},
-                                    error: false
-                                })
-                            }
-                        })
-                    }
+                        if (section.match("oracle", "i")) {
+                            return res.send({
+                                data: {},
+                                error: false
+                            })
+                        }
+                    })
+                }
 
-                })
-            } else throw new Error(`Could not find a property belonging to you with the id "${req.property_id}"`);
-        } else throw new Error("User not recognized!");
+            })
+        } else throw new Error(`Could not find a property belonging to you with the id "${req.property_id}"`);
+    } else throw new Error("User not recognized!");
     // } catch (e) {
     //     return res.send({
     //         data: {
@@ -452,39 +424,48 @@ async function fetchPropetyDocs(req, res) {
             // select properties belonging to a specific entity
             let property_data = [];
             let credentials = await api.query.oracle.credentialRegistry.entries();
-            if (!credentials) throw new Error("could not locate any credential entry");
+            let keyStore = [];
 
-            credentials.forEach(async ([key, property]) => {
+            credentials.forEach(([key, property]) => {
                 // now get all entries for the property
                 let realKey = key.toHuman()[0];
-                let creds = (await api.query.oracle.credentialRegistry(realKey)).toHuman();
+                keyStore.push(realKey);
+            });
+
+            for (var i = 0; i < keyStore.length; i++) {
                 let index = 0;
+                let hkey = keyStore[i];
+                let creds = (await api.query.oracle.credentialRegistry(hkey)).toHuman();
+
+                // fetch document type to get the registrar
+                let doc = (await api.query.oracle.propertyTypeRegistry(hkey)).toHuman();
+                if (!doc) throw new Error("could not locate any document type entry");
 
                 creds.forEach(c => {
-                    let parsed_cred = property.toHuman()[0];
-                    if (parsed_cred.owner == req.value) {
+                    if (c.owner == req.value) {
                         property_data.push({
-                            id: `${realKey}#${index}`,     // the unique id is an hash of the CID. The CID is always unique
-                            owner: parsed_cred.owner,
-                            cid: parsed_cred.cid,
-                            verifiers: parsed_cred.verifiers,
-                            timestamp: parsed_cred.timestamp
+                            id: `${hkey}#${index}`,     // the unique id is an hash of the CID. The CID is always unique
+                            owner: c.owner,
+                            cid: c.cid,
+                            verifiers: c.verifiers,
+                            timestamp: c.timestamp,
+                            ptype_registrar: doc.registrar
                         });
                     }
 
                     index++;
-
-                    if (property_data.length) {
-                        return res.send({
-                            data: util.sortBy("timestamp", property_data),
-                            error: false
-                        })
-                    }
                 });
-            })
+
+            }
 
             if (!property_data.length)
                 throw new Error("No property found!");
+            else {
+                return res.send({
+                    data: util.sortBy("timestamp", property_data),
+                    error: false
+                })
+            }
         }
     } catch (e) {
         return res.send({

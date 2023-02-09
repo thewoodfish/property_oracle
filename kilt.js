@@ -30,7 +30,7 @@ export async function connect() {
     try {
         // set up the samaritan test account
         // api = await Kilt.connect('wss://peregrine.kilt.io/parachain-public-ws');
-        await Kilt.connect(`wss://peregrine.kilt.io`);
+        await Kilt.connect(`wss://peregrine.kilt.io/parachain-public-ws`);
         api = Kilt.ConfigService.get(`api`);
     } catch (e) {
         return false;
@@ -203,25 +203,30 @@ function useSignCallback(keyUri, didSigningKey) {
 }
 
 export async function verifyPresentation(presentation, challenge = undefined) {
-    // Verify the presentation with the provided challenge.
-    let trustedAttesterUris = []
-    console.log(presentation);
-    await Kilt.Credential.verifyPresentation(presentation, { challenge })
-    const attestationChain = await api.query.attestation.attestations(
-        presentation.rootHash
-      )
-    
-      const attestation = Kilt.Attestation.fromChain(
-        attestationChain,
-        presentation.rootHash
-      )
-    
-      if (attestation.revoked) {
-        throw new Error("Credential has been revoked and hence it's not valid.")
-      }
-      if (!trustedAttesterUris.includes(attestation.owner)) {
-        throw `Credential was issued by ${attestation.owner} which is not in the provided list of trusted attesters: ${trustedAttesterUris}.`
-      }
+    try {
+        // Verify the presentation with the provided challenge.
+        let trustedAttesterUris = []
+        await Kilt.Credential.verifyPresentation(presentation, { challenge })
+        const attestationChain = await api.query.attestation.attestations(
+            presentation.rootHash
+        )
+
+        const attestation = Kilt.Attestation.fromChain(
+            attestationChain,
+            presentation.rootHash
+        )
+
+        if (attestation.revoked) {
+            throw new Error("Credential has been revoked and hence it's not valid.")
+        }
+        if (!trustedAttesterUris.includes(attestation.owner)) {
+            throw `Credential was issued by ${attestation.owner} which is not in the provided list of trusted attesters: ${trustedAttesterUris}.`
+        }
+
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
 
 export async function createAttestation(
@@ -229,11 +234,9 @@ export async function createAttestation(
     mnemonic,
     credential
 ) {
-    const { authentication, encryption, attestation, delegation } = generateKeypairs(mnemonic);
+    try {
+        const { authentication, encryption, attestation, delegation } = generateKeypairs(mnemonic);
         const { cTypeHash, claimHash, delegationId } = Kilt.Attestation.fromCredentialAndDid(credential, attester);
-
-
-        console.log(cTypeHash + " --- " + claimHash);
 
         // create signCallback
         let signCallback = useSignCallback(attester, attestation);
@@ -257,9 +260,9 @@ export async function createAttestation(
             sam
         );
 
-    //     return true;
-    // } catch (e) {
-    //     return false;
-    // }
+        return true;
+    } catch (e) {
+        return false;
+    }
 
 }
