@@ -14,5 +14,9 @@ With Property Oracle, nobody can take what is yours and leave you with nothing.
 
 ## Notable Property Oracle Operations
 - `Search for property`
+<img src="https://github.com/thewoodfish/property_oracle/blob/main/public/img/screenshot-1.png" style="width: 700px">
+- `Create a property document type`
+
+
 
 So all in all, even though your physical documents can be duplicated or falsified by scammers, once you fill your document using property oracle and get the right authority to sign it, 😁 YOU MY FRIEND, ARE VERY SAFE, FOREVER!
