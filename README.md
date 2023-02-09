@@ -20,5 +20,16 @@ With Property Oracle, nobody can take what is yours and leave you with nothing.
 - `Create a property document type`
 <img src="https://github.com/thewoodfish/property_oracle/blob/main/public/img/screenshot-2.png" style="width: 700px">
 
+-  `Register a property`
+<img src="https://github.com/thewoodfish/property_oracle/blob/main/public/img/screenshot-3.png" style="width: 700px">
+
+-  `Transfer your property`
+<img src="https://github.com/thewoodfish/property_oracle/blob/main/public/img/screenshot-4.png" style="width: 700px">
+
+-  `Sign Document`
+<img src="https://github.com/thewoodfish/property_oracle/blob/main/public/img/screenshot-5.png" style="width: 700px">
+
+-  `Make enquiry about a property`
+<img src="https://github.com/thewoodfish/property_oracle/blob/main/public/img/screenshot-6.png" style="width: 700px">
 
 So all in all, even though your physical documents can be duplicated or falsified by scammers, once you fill your document using property oracle and get the right authority to sign it, 😁 YOU MY FRIEND, ARE VERY SAFE, FOREVER!
