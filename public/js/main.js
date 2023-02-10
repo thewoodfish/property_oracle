@@ -745,23 +745,25 @@ document.body.addEventListener(
     false
 );
 
-document.body.addEventListener("change", (e) => {
-    e = e.target;
-    if (e.classList.contains("document-type-selector")) {
-        // fetch the details from the network
-        let docBody = qs(".document-property-body");
-        docBody.innerHTML = "";
-        if (e.value != "zero") {
-            const selected = e.value.split("$$$");
-            const attributes = selected[2].split('~');
-            const cid = selected[1];
+document.body.addEventListener(
+    "change",
+    (e) => {
+        e = e.target;
+        if (e.classList.contains("document-type-selector")) {
+            // fetch the details from the network
+            let docBody = qs(".document-property-body");
+            docBody.innerHTML = "";
+            if (e.value != "zero") {
+                const selected = e.value.split("$$$");
+                const attributes = selected[2].split('~');
+                const cid = selected[1];
 
-            appear(".document-indicator");
-            appear(".property-document-container");
-            qs(".document-title").innerText = selected[0];
+                appear(".document-indicator");
+                appear(".property-document-container");
+                qs(".document-title").innerText = selected[0];
 
-            attributes.forEach(a => {
-                docBody.innerHTML += `
+                attributes.forEach(a => {
+                    docBody.innerHTML += `
                     <div class="mb-3 col-6">
                         <label for="${a}"
                             class="form-label">${a}</label>
@@ -770,18 +772,18 @@ document.body.addEventListener("change", (e) => {
                             placeholder="">
                     </div>
                 `;
-            });
-        } else {
-            hide(".document-indicator");
-            hide(".property-document-container");
+                });
+            } else {
+                hide(".document-indicator");
+                hide(".property-document-container");
+            }
+        } else if (e.classList.contains("property-search-filter")) {
+            if (!e.selectedIndex) {
+                hide(".document-select-option-1");
+                appear(".document-select-option-2");
+            } else {
+                appear(".document-select-option-1");
+                hide(".document-select-option-2");
+            }
         }
-    } else if (e.classList.contains("property-search-filter")) {
-        if (!e.selectedIndex) {
-            hide(".document-select-option-1");
-            appear(".document-select-option-2");
-        } else {
-            appear(".document-select-option-1");
-            hide(".document-select-option-2");
-        }
-    }
-}, false);
+    }, false);

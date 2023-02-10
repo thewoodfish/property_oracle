@@ -206,22 +206,23 @@ export async function verifyPresentation(presentation, challenge = undefined) {
     try {
         // Verify the presentation with the provided challenge.
         let trustedAttesterUris = []
-        await Kilt.Credential.verifyPresentation(presentation, { challenge })
+        await Kilt.Credential.verifyPresentation(presentation, { challenge });
         const attestationChain = await api.query.attestation.attestations(
             presentation.rootHash
-        )
+        );
 
         const attestation = Kilt.Attestation.fromChain(
             attestationChain,
             presentation.rootHash
-        )
+        );
 
         if (attestation.revoked) {
             throw new Error("Credential has been revoked and hence it's not valid.")
-        }
+        };
+
         if (!trustedAttesterUris.includes(attestation.owner)) {
             throw `Credential was issued by ${attestation.owner} which is not in the provided list of trusted attesters: ${trustedAttesterUris}.`
-        }
+        };
 
         return true;
     } catch (e) {
