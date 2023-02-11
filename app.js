@@ -225,7 +225,12 @@ async function signPropertyClaim(req, res) {
                 // retrieve the KILT claim from IPFSx
                 await storg.getFromIPFS(cid).then(async data => {
                     let claim = JSON.parse(data);
-                    let success = await kilt.createAttestation(user.did, user.fullDid.mnemonic, claim);
+                    let success = true;
+                    
+                    // only registrar can create a KILT attestation because it is only allowed once
+                    if (doc.registrar == /* user.keyPair.address */ alice.address)
+                        success = await kilt.createAttestation(user.did, user.fullDid.mnemonic, claim);
+                        
                     if (success) {
                         // save signoatory onchain
                         const transfer = api.tx.oracle.attestClaim(pkey, cid, doc.registrar == /*user.keyPair.address*/ alice.address);
@@ -320,7 +325,7 @@ async function transferProperty(req, res) {
         if (!phantom) throw new Error("invalid recipient substrate address given!");
 
         // make sure sender != reciever
-        // if (user.address == req.recipient) throw new Error("you cannot transfer to yourself!");
+        if (bob.address /* user.address */ == req.recipient) throw new Error("you cannot transfer to yourself!");
 
         let property = (await getCredentials(req.property_id));
         let cid = property.credential.cid;
