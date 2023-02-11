@@ -799,4 +799,6 @@ async function signInUser(req, res) {
 }
 
 // listen on port 3000
-app.listen(port, () => console.info(`listening on port ${port}`));
+// app.listen(port, () => console.info(`listening on port ${port}`));
+app.listen(process.env.PORT || 3001, () => console.info(`listening on port ${port}`));  // for heroku
+
