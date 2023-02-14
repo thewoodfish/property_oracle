@@ -289,31 +289,69 @@
                                                 property.
                                             </p>
                                         </div>
-                                        <code>Please input a valid substrate address of the recipient:</code>
+                                        <code>Please input a valid property ID:</code>
                                         <div class="pt-10">
-                                            <form class="g-3">
+                                            <form class="row g-3">
                                                 <div class="col-auto width-50">
                                                     <!-- <label for="attr" class="visually-hidden">attr</label> -->
-                                                    <input type="text" class="form-control sub-address"
-                                                        placeholder="5FHneW46xGXgs5mUiveU4sbTyGBzmstU...">
-
-                                                    <div class="mt-10">
-                                                        <code>Please input a valid property ID:</code>
-                                                        <input type="text" class="mt-10 form-control property-id"
-                                                            placeholder="0x829f65744b2nd5742cec908a6cf3bfe4f3c19c14d5...">
-                                                    </div>
+                                                    <input type="text" class="form-control input-for-transfer"
+                                                        placeholder="0x829f65744b2nd5742cec908a6cf3bfe4f3c19c14d5...">
                                                 </div>
-                                                <div class="col-auto mt-20">
-                                                    <button class="btn btn-primary mb-3 transfer-property-btn-before"
-                                                        onclick="return false">Transfer Property</button>
-                                                    <button class="btn btn-primary transfer-property-btn-after hidden"
+                                                <div class="col-auto">
+                                                    <button class="btn btn-primary mb-3 transfer-search-btn-before"
+                                                        onclick="return false">Load Document</button>
+                                                    <button class="btn btn-primary transfer-search-btn-after hidden"
                                                         type="button" disabled>
                                                         <span class="spinner-border spinner-border-sm" role="status"
                                                             aria-hidden="true"></span>
-                                                        Processing Transfer...
+                                                        Loading...
                                                     </button>
                                                 </div>
                                             </form>
+                                        </div>
+                                        <p class="mt-30 document-trans-indicator hidden">Document:</p>
+                                        <div class="mt-10 document-trans-container hidden">
+                                            <div class="card  br-0 shadow">
+                                                <div class="card-body">
+                                                    <p class="center">📑
+                                                        <code class="trans-document-title"></code>
+                                                    </p>
+                                                    <hr>
+                                                    <div>
+                                                        <div class="mb-3 col-6">
+                                                            <code class="form-label">Valid substrate address of
+                                                                recipient:</code>
+                                                            <input type="text"
+                                                                class="form-control mt-10 form-control-sm recipient-addr"
+                                                                id="" placeholder="5FHneW46xGXgs5mUiveU4sbTyGBzmstU...">
+                                                        </div>
+                                                    </div>
+                                                    <hr>
+                                                    <div class="row pt-10 document-trans-body">
+                                                    </div>
+                                                    <hr>
+                                                    <div>
+                                                        <div class="flex">
+                                                            <code>You are agreeing to transfer </code>
+                                                            <input type="number"
+                                                                class="form-control form-control-sm trans-property-size"
+                                                                value="1"> <code class="property-size"></code>.
+                                                        </div>
+                                                    </div>
+                                                    <p class="small center color-gray fs-80 mt-30">Property Oracle 2023
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="d-grid gap-2 mt-30 ">
+                                                <button class="btn btn-primary transfer-property-btn-before"
+                                                    type="button">Transfer Property</button>
+                                                <button class="btn btn-primary transfer-property-btn-after hidden"
+                                                    type="button" disabled="">
+                                                    <span class="spinner-border spinner-border-sm" role="status"
+                                                        aria-hidden="true"></span>
+                                                    Processing transfer...
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -493,17 +531,22 @@
                                                 <div class="col-4 pt-10">
                                                     <img src="img/verdict.png" class="width-100">
                                                 </div>
-                                                <div class="card hidden negative-verdict border-0">
-                                                    <div class="card-body pt-20">
-                                                        <p><span>Property ID: <span class="prop-id red"></span></span>
-                                                        </p>
-                                                        <p><span>Claimer ID: <span class="claimer-id red"></span></span>
-                                                        </p>
-                                                        <p class="bold">Verdict: The claim to the property has not been
+                                                <div class="card col-8 border-0">
+                                                    <div class="card-body pt-0">
+                                                        <div class="pt-10"><span>Property ID: <span
+                                                                    class="prop-id green small"></span></span>
+                                                        </div>
+                                                        <div  class="pt-10">Claim History: <div class="claimers-list green small">
+
+                                                            </div>
+                                                        </div>
+                                                        <div  class="pt-10"><span >Claimer ID: <span class="claimer-id  green small"></span></span>
+                                                        </div>
+                                                        <div class="bold pt-10">Verdict: The claim to the property has not been
                                                             confirmed by the right authority, hence the claim is invalid
                                                             and
-                                                            can be disputed.</p>
-                                                        <div class="enquiry-details bold">
+                                                            can be disputed.</div>
+                                                        <div class="enquiry-details bold pt-10">
                                                             <code class="">
                                                         </code>
                                                         </div>
@@ -515,16 +558,21 @@
                                                     <img src="img/verdict.png" class="width-100">
                                                 </div>
                                                 <div class="col-8 card border-0">
-                                                    <div class="card-body pt-20">
-                                                        <p><span>Property ID: <span class="prop-id green"></span></span>
-                                                        </p>
-                                                        <p><span>Claimer ID: <span
-                                                                    class="claimer-id green"></span></span></p>
-                                                        <p class="bold">Verdict: The property rightfully belongs to the
+                                                    <div class="card-body pt-0">
+                                                        <div  class="pt-10"><span>Property ID: <span
+                                                                    class="prop-id green small"></span></span>
+                                                        </div>
+                                                        <div  class="pt-10">Claim History: <div class="claimers-list green small">
+
+                                                            </div>
+                                                        </div>
+                                                        <div  class="pt-10"><span>Claimer ID: <span
+                                                                    class="claimer-id green"></span></span></div>
+                                                        <div class="bold pt-10">Verdict: The property rightfully belongs to the
                                                             claimer. It was confirmed by the right authority on
                                                             <code><span class="verdict-datetime green"></span></code>.
-                                                        </p>
-                                                        <div class="enquiry-details bold">
+                                                        </div>
+                                                        <div class="enquiry-details bold pt-10">
                                                             <code class="">
                                                             </code>
                                                         </div>

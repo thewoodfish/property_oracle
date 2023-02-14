@@ -65,6 +65,10 @@ export function strToCType(str) {
     return obj;
 }
 
+export function getUri(obj) {
+    return obj.uri ? obj.uri : obj.fullDid.uri;
+}
+
 export function generateRandomNumber() {
     var min = 1;
     var max = 100;

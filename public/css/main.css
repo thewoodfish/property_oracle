@@ -272,14 +272,6 @@ input::-ms-input-placeholder {
     padding-top: 30px;
 }
 
-.negative-verdict {
-    background: #ffe6e6;
-}
-
-.positive-verdict {
-    /* background: #e9fff0; */
-}
-
 .footer {
     position: static;
     bottom: 0;
@@ -291,7 +283,7 @@ input::-ms-input-placeholder {
 }
 
 .green {
-    color: rgb(7, 212, 7) !important;
+    color: rgb(129 129 129) !important;
 }
 
 .red {
@@ -300,4 +292,15 @@ input::-ms-input-placeholder {
 
 .border-0 {
     border: 0 !important;
+}
+
+.trans-property-size {
+    width: 60px;
+    margin: 0 10px;
+    position: relative;
+    top: -5px;
+}
+
+.flex {
+    display: flex;
 }

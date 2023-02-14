@@ -553,44 +553,70 @@ document.body.addEventListener(
                         ;
                     })
             } else if (e.classList.contains("transfer-property-btn-before")) {
-                const propertID = qs(".property-id").value;
-                const substrateAddr = qs(".sub-address").value;
-                if (propertID && substrateAddr) {
-                    hide(".transfer-property-btn-before");
-                    appear(".transfer-property-btn-after");
+                if (userIsAuth()) {
+                    let recipient = qs(".recipient-addr");
+                    let psize = qs(".trans-property-size");
+                    let allFilled = true;
+                    let values = [];
+                    let total_size = parseInt(qs(".property-size").innerText.split(' ')[1]);
 
-                    fetch("/transfer-property", {
-                        method: 'post',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            "property_id": propertID,
-                            "recipient": substrateAddr,
-                            "nonce": getSessionNonce()
+                    qsa(".trans-document-properties").forEach(e => {
+                        if (!e.value)
+                            allFilled = false;
+                        values.push(e.value);
+                    });
+
+                    if (psize.value > total_size) {
+                        toast("You cannot transfer more property than you possess");
+                        return;
+                    }
+
+                    if (allFilled && recipient.value && psize.value) {
+                        hide(".transfer-property-btn-before");
+                        appear(".transfer-property-btn-after");
+
+                        qs(".trans-property-size").disabled = true;
+                        qs(".input-for-transfer").disabled = true;
+
+                        // send to server
+                        fetch("/transfer-property", {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                "values": values.join("~"),
+                                "recipient": recipient.value,
+                                "transfer_all": psize.value == total_size,
+                                "property_size": qs(".trans-property-size").value,
+                                "total_size": qs(".property-size").innerText,
+                                "property_id": qs(".trans-document-title").dataset.pid,
+                                "nonce": getSessionNonce()
+                            })
                         })
-                    })
-                        .then(async res => {
-                            await res.json().then(res => {
-                                appear(".transfer-property-btn-before");
-                                hide(".transfer-property-btn-after");
+                            .then(async res => {
+                                await res.json().then(res => {
+                                    qs(".trans-property-size").disabled = false;
+                                    qs(".input-for-transfer").disabled = false;
 
-                                if (!res.error) {
-                                    appear(".property-transfer-success");
-                                    setTimeout(() => hide(".property-transfer-success"), 5000);
+                                    if (!res.error) {
+                                        clearField(".input-for-transfer");
+                                        hide(".document-trans-indicator");
+                                        hide(".document-trans-container");
 
-                                    clearField(".sub-address");
-                                    clearField(".property-id");
-                                } else {
-                                    qs(".main-error-text").innerText = `Could not transfer property. Please check your input or try again later`;
-                                    appear(".property-transfer-error");
-                                    setTimeout(() => hide(".property-transfer-error"), 5000);
-                                }
-                            });
-                            ;
-                        })
-                } else {
-                    toast(`❌ please fill in all the input areas.`)
+                                        appear(".property-transfer-success");
+                                        setTimeout(() => hide(".property-transfer-success"), 5000);
+                                    } else {
+                                        qs(".main-error-text").innerText = `❌ Could not complete transfer`;
+                                        appear(".property-transfer-error");
+                                        setTimeout(() => hide(".property-transfer-error"), 5000);
+                                    }
+                                });
+                                ;
+                            })
+                    } else {
+                        toast(`❌ Please fill out all fields of the document.`);
+                    }
                 }
             } else if (e.classList.contains("search-pdoc-btn-before")) {
                 let propertID = qs(".input-for-signature").value;
@@ -717,6 +743,14 @@ document.body.addEventListener(
                                         p.innerText = res.data.claimer;
                                     });
 
+                                    qsa(".claimers-list").forEach(cl => {
+                                        let index = 0;
+                                        res.data.claimers.forEach(e => {
+                                            cl.innerHTML += `${e} ${res.data.claimers[index + 1] ? " ➡ " : ""}`;
+                                            index++;
+                                        });
+                                    });
+
                                     if (res.data.isValid) {
                                         appear(".positive-verdict");
                                         hide(".negative-verdict");
@@ -737,6 +771,69 @@ document.body.addEventListener(
                 } else {
                     toast(`❌ please fill in a valid property ID.`);
                 }
+            } else if (e.classList.contains("transfer-search-btn-before")) {
+                let propertID = qs(".input-for-transfer").value;
+                if (propertID) {
+                    hide(".transfer-search-btn-before");
+                    appear(".transfer-search-btn-after");
+
+                    // fetch specific document from IPFS
+                    fetch("/fetch-property", {
+                        method: 'post',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            "property_id": propertID,
+                        })
+                    })
+                        .then(async res => {
+                            await res.json().then(res => {
+                                appear(".transfer-search-btn-before");
+                                hide(".transfer-search-btn-after");
+
+                                if (!res.error) {
+                                    appear(".document-trans-indicator");
+                                    appear(".document-trans-container");
+                                    qs(".trans-document-title").innerText = `${res.data.title} - Transfer Document`;
+                                    qs(".trans-document-title").dataset.pid = propertID;
+
+                                    let div = qs(".document-trans-body");
+                                    div.innerHTML = "";
+                                    let index = 0;
+                                    Object.entries(res.data.attr).forEach(([k, v]) => {
+                                        div.innerHTML += `
+                                                <div class="mb-3 col-6">
+                                                    <label for="size of property" class="form-label">${k}</label>
+                                                    <input type="text"
+                                                        class="form-control form-control-sm trans-document-properties ${index == 1 ? "transfer-nsize" : ""}"
+                                                         value="${!index ? v : ""}" ${index < 2 ? "disabled" : ""}>
+                                                </div>
+                                            `;
+
+                                        if (index == 1) {
+                                            qs(".trans-property-size").max = parseInt(v.split(' ')[0]);
+                                            qs(".property-size").innerText = `of ${v}`;
+                                        }
+                                        index++;
+                                    })
+
+                                    // set initial transfer value
+                                    qs(".transfer-nsize").value = `1 ${qs(".property-size").innerText.split(' ')[2]}`;
+
+                                } else {
+                                    hide(".document-trans-indicator");
+                                    hide(".document-trans-container");
+                                    qs(".main-error-text").innerText = `Could not locate property claim. Please check your input.`;
+                                    appear(".property-transfer-error");
+                                    setTimeout(() => hide(".property-transfer-error"), 5000);
+                                }
+                            });
+                            ;
+                        })
+                } else {
+                    toast(`❌ please fill in a valid property ID.`);
+                }
             }
         } else {
             toast(`waiting to connect to the <code>Property Oracle</code> and <code>KILT</code> chain.`);
@@ -744,6 +841,10 @@ document.body.addEventListener(
     },
     false
 );
+
+qs(".trans-property-size").addEventListener("keyup", (e) => {
+    qs(".transfer-nsize").value = `${e.target.value} ${qs(".property-size").innerText.split(' ')[2]}`;
+}, false);
 
 document.body.addEventListener(
     "change",

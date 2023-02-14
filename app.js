@@ -140,7 +140,7 @@ async function enquirePropertyClaim(req, res) {
         // store verifiers
         let property = (await getCredentials(req.property_id));
         let credential_cid = property.credential.cid;
-        let claimer = property.credential.owner;
+        let claimers = property.credential.owners;
         let pkey = property.key;
         let timestamp = property.credential.timestamp;
         let verifiers = property.credential.verifiers;
@@ -178,7 +178,8 @@ async function enquirePropertyClaim(req, res) {
                     data: {
                         isValid: isValid1 && isValid2,
                         registrar,
-                        claimer,
+                        claimers,
+                        claimer: claimers[claimers.length - 1],
                         timestamp
                     },
                     error: false
@@ -226,11 +227,11 @@ async function signPropertyClaim(req, res) {
                 await storg.getFromIPFS(cid).then(async data => {
                     let claim = JSON.parse(data);
                     let success = true;
-                    
+
                     // only registrar can create a KILT attestation because it is only allowed once
                     if (doc.registrar == /* user.keyPair.address */ alice.address)
                         success = await kilt.createAttestation(user.did, user.fullDid.mnemonic, claim);
-                        
+
                     if (success) {
                         // save signoatory onchain
                         const transfer = api.tx.oracle.attestClaim(pkey, cid, doc.registrar == /*user.keyPair.address*/ alice.address);
@@ -317,56 +318,99 @@ async function getCredentials(id) {
 
 // transfer property to another entity
 async function transferProperty(req, res) {
-    // try {
-    let user = authUser(req.nonce);
-    if (user) {
-        // first check for existence/validity of the recipients substrate address
-        let phantom = (await api.query.oracle.userRegistry(req.recipient)).toHuman();
-        if (!phantom) throw new Error("invalid recipient substrate address given!");
+    try {
+        let user = authUser(req.nonce);
+        if (user) {
+            // first check for existence/validity of the recipients substrate address
+            let phantom = (await api.query.oracle.userRegistry(req.recipient)).toHuman();
+            if (!phantom) throw new Error("invalid recipient substrate address given!");
 
-        // make sure sender != reciever
-        if (bob.address /* user.address */ == req.recipient) throw new Error("you cannot transfer to yourself!");
+            // make sure sender != reciever
+            if (bob.address /* user.address */ == req.recipient) throw new Error("you cannot transfer to yourself!");
 
-        let property = (await getCredentials(req.property_id));
-        let cid = property.credential.cid;
-        let pkey = property.key;
+            let property = (await getCredentials(req.property_id));
+            let original_cid = property.credential.cid;
+            let new_sender_cid = "";
+            let pkey = property.key;
 
-        if (cid && pkey) {
-            // intiate transfer
-            const transfer = api.tx.oracle.transferProperty(req.recipient, pkey, cid);
-            const _ = await transfer.signAndSend(/* user.keyPair */bob, ({ events = [], status }) => {
-                if (status.isInBlock) {
-                    events.forEach(({ event: { data, method, section }, phase }) => {
-                        // check for errors
-                        if (section.match("system", "i") && data.toString().indexOf("error") != -1) {
-                            return res.send({
-                                data: {
-                                    msg: "property not found, please check the property id."
-                                },
-                                error: true
-                            })
+            if (original_cid && pkey) {
+                // get the property document fields and populate with the new ones we have now for the recipient
+                let doc = (await api.query.oracle.propertyTypeRegistry(req.property_id.split('#')[0])).toHuman();
+                if (!doc) throw new Error("could not locate any document type entry");
+
+                // get the cid of the Ctype and retrieve from IPFS
+                await storg.getFromIPFS(doc.cid).then(async cType => {
+                    let matchedProps = util.matchProperty(doc.attributes.split("~"), req.values.split("~"));
+
+                    // create a dummy light DID to become the credential subject. 
+                    // Thank God for the abstraction of the substrate address, this bump is not visible
+                    let user_ldid = await kilt.getKiltLightDID("");
+
+                    // generate credential
+                    let cred = kilt.createClaim(JSON.parse(cType), matchedProps, user_ldid.uri);
+
+                    //  get original cid and change the value of size of properties being transferred, if its not everything being transferred
+                    await storg.getFromIPFS(original_cid).then(async o_cred => {
+                        let original_cred = JSON.parse(o_cred);
+
+                        // if the guy is not giving it all out
+                        if (!req.transfer_all) {
+                            // get the total property
+                            let total_property = req.total_size.split(' ');
+                            original_cred.claim.contents["Size of property"] = `${parseInt(total_property[1]) - parseInt(req.property_size)} ${total_property[2]}`;
+
+                            // upload to IPFS and get new CID
+                            new_sender_cid = await new Promise(async (resolve) => {
+                                await storg.uploadToIPFS(JSON.stringify(original_cred)).then(async ncid => {
+                                    resolve(ncid);
+                                })
+                            });
                         }
 
-                        if (section.match("oracle", "i")) {
-                            return res.send({
-                                data: {},
-                                error: false
+                        // upload to IPFS and retrieve the CID
+                        if (cred) {
+                            await storg.uploadToIPFS(JSON.stringify(cred)).then(async cid => {
+                                // intiate transfer
+                                const transfer = api.tx.oracle.transferProperty(req.recipient, pkey, original_cid, new_sender_cid, cid, req.transfer_all);
+                                const _ = await transfer.signAndSend(/* user.keyPair */bob, ({ events = [], status }) => {
+                                    if (status.isInBlock) {
+                                        events.forEach(({ event: { data, method, section }, phase }) => {
+                                            // check for errors
+                                            if (section.match("system", "i") && data.toString().indexOf("error") != -1) {
+                                                console.log(data.toString());
+                                                return res.send({
+                                                    data: {
+                                                        msg: "property not found, please check the property id."
+                                                    },
+                                                    error: true
+                                                })
+                                            }
+
+                                            if (section.match("oracle", "i")) {
+                                                return res.send({
+                                                    data: {},
+                                                    error: false
+                                                })
+                                            }
+                                        })
+                                    }
+
+                                })
                             })
                         }
                     })
-                }
+                })
 
-            })
-        } else throw new Error(`Could not find a property belonging to you with the id "${req.property_id}"`);
-    } else throw new Error("User not recognized!");
-    // } catch (e) {
-    //     return res.send({
-    //         data: {
-    //             msg: e.toString()
-    //         },
-    //         error: true
-    //     })
-    // }
+            } else throw new Error(`Could not find a property belonging to you with the id "${req.property_id}"`);
+        } else throw new Error("User not recognized!");
+    } catch (e) {
+        return res.send({
+            data: {
+                msg: e.toString()
+            },
+            error: true
+        })
+    }
 }
 
 // load document details from IPFS 
@@ -408,7 +452,7 @@ async function fetchPropetyDocs(req, res) {
             credentials.forEach((p) => {
                 property_data.push({
                     id: `${hkey}#${index}`,     // the unique id is an hash of the CID. The CID is always unique
-                    owner: p.owner,
+                    owner: p.owners[p.owners.length - 1],
                     cid: p.cid,
                     verifiers: p.verifiers,
                     timestamp: p.timestamp,
@@ -520,22 +564,23 @@ async function upgradeToFullDid(nonce, user) {
 
 // submit filled document and generate a credential
 async function submitDocumentDetails(req, res) {
-    try {
-        let user = authUser(req.nonce);
-        if (user) {
-            // retrieve the document properties from the chain
-            let property = (await api.query.oracle.propertyTypeRegistry(req.key)).toHuman();
-            if (!property) throw new Error(`could not retrieve properties of document`);
+    // try {
+    let user = authUser(req.nonce);
+    if (user) {
+        // retrieve the document properties from the chain
+        let property = (await api.query.oracle.propertyTypeRegistry(req.key)).toHuman();
+        if (!property) throw new Error(`could not retrieve properties of document`);
 
-            // retrieve the document cType from IPFS
-            await storg.getFromIPFS(property.cid).then(cType => {
-                let matchedProps = util.matchProperty(property.attributes.split("~"), req.values.split("~"));
+        // retrieve the document cType from IPFS
+        await storg.getFromIPFS(property.cid).then(cType => {
+            let matchedProps = util.matchProperty(property.attributes.split("~"), req.values.split("~"));
 
-                (async function () {
-                    // generate credential
-                    let cred = kilt.createClaim(JSON.parse(cType), matchedProps, user.fullDid.uri);
+            (async function () {
+                // generate credential
+                let cred = kilt.createClaim(JSON.parse(cType), matchedProps, util.getUri(user.fullDid));
 
-                    // upload to IPFS and retrieve the CID
+                // upload to IPFS and retrieve the CID
+                if (cred) {
                     await storg.uploadToIPFS(JSON.stringify(cred)).then(async cid => {
                         // get hash
                         let hash = blake2AsHex(req.title);
@@ -558,15 +603,16 @@ async function submitDocumentDetails(req, res) {
                             }
                         })
                     });
-                })();
-            });
-        }
-    } catch (e) {
-        return res.send({
-            data: {},
-            error: true
-        })
+                } else throw new Error("could not create credential")
+            })();
+        });
     }
+    // } catch (e) {
+    //     return res.send({
+    //         data: {},
+    //         error: true
+    //     })
+    // }
 }
 
 // retreive the properties available onchain
@@ -697,7 +743,7 @@ async function createNewUser(req, res) {
                     (async function () {
                         // record new user entry onchain
                         const transfer = api.tx.oracle.recordUser(cid);
-                        const _ = await transfer.signAndSend(/*user */alice, ({ events = [], status }) => {
+                        const _ = await transfer.signAndSend(/*user */bob, ({ events = [], status }) => {
                             if (status.isInBlock) {
                                 events.forEach(({ event: { data, method, section }, phase }) => {
                                     // check for errors
@@ -798,7 +844,6 @@ async function signInUser(req, res) {
     }
 }
 
-// listen on port 3000
-// app.listen(port, () => console.info(`listening on port ${port}`));
-app.listen(process.env.PORT || 3001, () => console.info(`listening on port ${port}`));  // for heroku
+// listen on port 4000
+app.listen(port, () => console.info(`listening on port ${port}`));
 
