@@ -32,6 +32,14 @@ With Property Oracle, nobody can take what is yours and leave you with nothing.
 -  `Make enquiry about a property`
 <img src="https://github.com/thewoodfish/property_oracle/blob/main/public/img/screenshot-6.png" style="width: 700px">
 
+## How to run or test Property Oracle
+- Install `npm` and `nodeJS` on your computer.
+- Clone the this(Property Oracle) repo.
+- Set up Property oracle chain and get it running. Directions are given here -> https://github.com/thewoodfish/property-oracle-node#running-a-local-node
+- Run `npm install`.
+- After installation of all the necessary packages, run `npm start`.
+- Start interacting with Property Oracle and making state changes onchain!
+
 ### Blockchain Node
 The code running on a Property Oracle node can be found here at -> https://github.com/thewoodfish/property-oracle-node
 
