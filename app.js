@@ -198,7 +198,7 @@ async function enquirePropertyClaim(req, res) {
 
 // attest an individuals claim to a property
 async function signPropertyClaim(req, res) {
-    try { 
+    try {
         let user = authUser(req.nonce);
         if (user) {
             // get cid of property claim
@@ -564,55 +564,55 @@ async function upgradeToFullDid(nonce, user) {
 
 // submit filled document and generate a credential
 async function submitDocumentDetails(req, res) {
-    // try {
-    let user = authUser(req.nonce);
-    if (user) {
-        // retrieve the document properties from the chain
-        let property = (await api.query.oracle.propertyTypeRegistry(req.key)).toHuman();
-        if (!property) throw new Error(`could not retrieve properties of document`);
+    try {
+        let user = authUser(req.nonce);
+        if (user) {
+            // retrieve the document properties from the chain
+            let property = (await api.query.oracle.propertyTypeRegistry(req.key)).toHuman();
+            if (!property) throw new Error(`could not retrieve properties of document`);
 
-        // retrieve the document cType from IPFS
-        await storg.getFromIPFS(property.cid).then(cType => {
-            let matchedProps = util.matchProperty(property.attributes.split("~"), req.values.split("~"));
+            // retrieve the document cType from IPFS
+            await storg.getFromIPFS(property.cid).then(cType => {
+                let matchedProps = util.matchProperty(property.attributes.split("~"), req.values.split("~"));
 
-            (async function () {
-                // generate credential
-                let cred = kilt.createClaim(JSON.parse(cType), matchedProps, util.getUri(user.fullDid));
+                (async function () {
+                    // generate credential
+                    let cred = kilt.createClaim(JSON.parse(cType), matchedProps, util.getUri(user.fullDid));
 
-                // upload to IPFS and retrieve the CID
-                if (cred) {
-                    await storg.uploadToIPFS(JSON.stringify(cred)).then(async cid => {
-                        // get hash
-                        let hash = blake2AsHex(req.title);
-                        // record onchain
-                        const transfer = api.tx.oracle.recordCredential(hash, cid);
-                        const _ = await transfer.signAndSend(/* user.keyPair */bob, ({ events = [], status }) => {
-                            if (status.isInBlock) {
-                                events.forEach(({ event: { data, method, section }, phase }) => {
-                                    // check for errors
-                                    if (section.match("system", "i") && data.toString().indexOf("error") != -1)
-                                        throw new Error("could not record credential onchain")
+                    // upload to IPFS and retrieve the CID
+                    if (cred) {
+                        await storg.uploadToIPFS(JSON.stringify(cred)).then(async cid => {
+                            // get hash
+                            let hash = blake2AsHex(req.title);
+                            // record onchain
+                            const transfer = api.tx.oracle.recordCredential(hash, cid);
+                            const _ = await transfer.signAndSend(/* user.keyPair */bob, ({ events = [], status }) => {
+                                if (status.isInBlock) {
+                                    events.forEach(({ event: { data, method, section }, phase }) => {
+                                        // check for errors
+                                        if (section.match("system", "i") && data.toString().indexOf("error") != -1)
+                                            throw new Error("could not record credential onchain")
 
-                                    if (section.match("oracle", "i")) {
-                                        return res.send({
-                                            data: {},
-                                            error: false
-                                        })
-                                    }
-                                })
-                            }
-                        })
-                    });
-                } else throw new Error("could not create credential")
-            })();
-        });
+                                        if (section.match("oracle", "i")) {
+                                            return res.send({
+                                                data: {},
+                                                error: false
+                                            })
+                                        }
+                                    })
+                                }
+                            })
+                        });
+                    } else throw new Error("could not create credential")
+                })();
+            });
+        }
+    } catch (e) {
+        return res.send({
+            data: {},
+            error: true
+        })
     }
-    // } catch (e) {
-    //     return res.send({
-    //         data: {},
-    //         error: true
-    //     })
-    // }
 }
 
 // retreive the properties available onchain
@@ -653,50 +653,50 @@ async function initChains(req) {
 }
 
 async function createPropertyType(req, res) {
-    // try {
-    let user = authUser(req.nonce);
-    if (user) {
-        // first make sure that the user has a full DID and not a light one
-        if (user.did.indexOf("light") != -1)
-            user = await upgradeToFullDid(req.nonce, user);
+    try {
+        let user = authUser(req.nonce);
+        if (user) {
+            // first make sure that the user has a full DID and not a light one
+            if (user.did.indexOf("light") != -1)
+                user = await upgradeToFullDid(req.nonce, user);
 
-        // now that we are sure that the user has a full did, we can create a KILT Ctype
-        let ptype = await kilt.mintCType({ title: req.title, attr: req.attributes }, user.fullDid);
+            // now that we are sure that the user has a full did, we can create a KILT Ctype
+            let ptype = await kilt.mintCType({ title: req.title, attr: req.attributes }, user.fullDid);
 
-        // we'll store it on IPFS and keep its cid
-        await storg.uploadToIPFS(JSON.stringify(ptype)).then(async ptypeCid => {
-            // create hash of property title/label
-            let ptHash = await getUniquePtypeHash(req.title);
+            // we'll store it on IPFS and keep its cid
+            await storg.uploadToIPFS(JSON.stringify(ptype)).then(async ptypeCid => {
+                // create hash of property title/label
+                let ptHash = await getUniquePtypeHash(req.title);
 
-            // record it on chain
-            (async function () {
-                const transfer = api.tx.oracle.recordPtype(ptHash, req.title, ptypeCid, req.attributes);
-                const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
-                    if (status.isInBlock) {
-                        events.forEach(({ event: { data, method, section }, phase }) => {
-                            // check for errors
-                            if (section.match("system", "i") && data.toString().indexOf("error") != -1)
-                                throw new Error("could not record property type")
+                // record it on chain
+                (async function () {
+                    const transfer = api.tx.oracle.recordPtype(ptHash, req.title, ptypeCid, req.attributes);
+                    const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
+                        if (status.isInBlock) {
+                            events.forEach(({ event: { data, method, section }, phase }) => {
+                                // check for errors
+                                if (section.match("system", "i") && data.toString().indexOf("error") != -1)
+                                    throw new Error("could not record property type")
 
-                            if (section.match("oracle", "i")) {
-                                // return success
-                                return res.send({
-                                    data: {},
-                                    error: false
-                                })
-                            }
-                        })
-                    }
-                })
-            })()
-        });
-    } else throw new Error("User not recognized!");
-    // } catch (e) {
-    //     return res.send({
-    //         data: {},
-    //         error: true
-    //     })
-    // }
+                                if (section.match("oracle", "i")) {
+                                    // return success
+                                    return res.send({
+                                        data: {},
+                                        error: false
+                                    })
+                                }
+                            })
+                        }
+                    })
+                })()
+            });
+        } else throw new Error("User not recognized!");
+    } catch (e) {
+        return res.send({
+            data: {},
+            error: true
+        })
+    }
 }
 
 async function getUniquePtypeHash(title) {

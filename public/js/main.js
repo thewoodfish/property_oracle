@@ -238,7 +238,7 @@ async function populateProperties(value, type) {
                                         </div>
                                     </div>
                                     <div class="">
-                                        <code>Timestamp:</code> ${convertTimestamp(parseInt(p.timestamp.replaceAll(',', '')))}
+                                        <code>Verification Timestamp:</code> ${p.timestamp != '0' ? convertTimestamp(parseInt(p.timestamp.replaceAll(',', ''))) : "Future"}
                                     </div>
                                 </div>
                             </div>
