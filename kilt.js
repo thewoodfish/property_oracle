@@ -30,8 +30,8 @@ export async function connect() {
     try {
         // set up the samaritan test account
         // api = await Kilt.connect('wss://peregrine.kilt.io/parachain-public-ws');
-        // await Kilt.connect(`wss://peregrine.kilt.io/parachain-public-ws`);
-        // api = Kilt.ConfigService.get(`api`);
+        await Kilt.connect(`wss://peregrine.kilt.io/parachain-public-ws`);
+        api = Kilt.ConfigService.get(`api`);
     } catch (e) {
         return false;
     }
