@@ -744,6 +744,7 @@ document.body.addEventListener(
                                     });
 
                                     qsa(".claimers-list").forEach(cl => {
+                                        cl.innerHTML = "";
                                         let index = 0;
                                         res.data.claimers.forEach(e => {
                                             cl.innerHTML += `${e} ${res.data.claimers[index + 1] ? " ➡ " : ""}`;

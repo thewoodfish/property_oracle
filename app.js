@@ -198,7 +198,7 @@ async function enquirePropertyClaim(req, res) {
 
 // attest an individuals claim to a property
 async function signPropertyClaim(req, res) {
-    try {
+    try { 
         let user = authUser(req.nonce);
         if (user) {
             // get cid of property claim
@@ -275,7 +275,7 @@ async function fetchPropertyClaim(req, res) {
     try {
         let property = (await getCredentials(req.property_id));
         let cid = property.credential.cid;
-        let owner = property.credential.owner;
+        let owners = property.credential.owners;
         let docTitle = property.type.title;
 
         await storg.getFromIPFS(cid).then(data => {
@@ -285,7 +285,7 @@ async function fetchPropertyClaim(req, res) {
                 data: {
                     title: docTitle,
                     attr: doc.claim.contents,
-                    owner
+                    owner: owners[owners.length - 1]
                 },
                 error: false
             });
@@ -491,10 +491,10 @@ async function fetchPropetyDocs(req, res) {
                 if (!doc) throw new Error("could not locate any document type entry");
 
                 creds.forEach(c => {
-                    if (c.owner == req.value) {
+                    if (c.owners[c.owners.length - 1] == req.value) {
                         property_data.push({
                             id: `${hkey}#${index}`,     // the unique id is an hash of the CID. The CID is always unique
-                            owner: c.owner,
+                            owner: c.owners[c.owners.length - 1],
                             cid: c.cid,
                             verifiers: c.verifiers,
                             timestamp: c.timestamp,
