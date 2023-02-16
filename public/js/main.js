@@ -73,8 +73,43 @@ function getOrdinalIndicator(num) {
     }
 }
 
+// check if server & chain is connected 
+function is_connected() {
+    if (qs(".chain-connected").classList.contains("hidden")) {
+        toast("Please check connection to server or chain");
+        return false;
+    }
+    return true;
+}
+
+async function heartbeat() {
+    // check if the property chain is still on and running
+    fetch("/heartbeat", {
+        method: 'get',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(async res => {
+            await res.json().then(res => {
+                if (!is_connected())
+                    toast("✅ connection repaired");
+
+                hide(".chain-connecting");
+                appear(".chain-connected");
+            });
+            ;
+        })
+        .catch(error => {
+            hide(".chain-connected");
+            appear(".chain-connecting");
+            toast("❌ connection to server or chain broken");
+        });
+}
+
 async function queryServerToSignIn(seed, rollup) {
     // send request to chain
+    if (!is_connected()) return;
     fetch("/sign-in", {
         method: 'post',
         headers: {
@@ -146,6 +181,7 @@ function getSessionNonce(value) {
 
 async function populatePropertyTitles() {
     // fetch all the property titles from the chain
+    if (!is_connected()) return;
     fetch("/fetch-titles", {
         method: 'get',
         headers: {
@@ -172,6 +208,7 @@ async function populatePropertyTitles() {
 
 async function populateProperties(value, type) {
     // fetch all the property titles from the chain
+    if (!is_connected()) return;
     fetch("/fetch-properties", {
         method: 'post',
         headers: {
@@ -219,7 +256,7 @@ async function populateProperties(value, type) {
                                     <code class="bold small">Property #${i}</code>
                                     <div class="mt-20 bold">
                                         <code>ID:</code>
-                                        ${p.id}
+                                        <span class="xx-${p.id.substr(0, 7)}">${p.id}</span> <a class="copy pointer" data-class="xx-${p.id.substr(0, 7)}">Copy</a>
                                     </div>
                                     <div class="">
                                         <code>Owner:</code>
@@ -238,7 +275,7 @@ async function populateProperties(value, type) {
                                         </div>
                                     </div>
                                     <div class="">
-                                        <code>Verification Timestamp:</code> ${p.timestamp != '0' ? convertTimestamp(parseInt(p.timestamp.replaceAll(',', ''))) : "Future"}
+                                        <code>Verification Timestamp:</code> ${p.timestamp != '0' ? convertTimestamp(parseInt(p.timestamp.replaceAll(',', ''))) : "Nil"}
                                     </div>
                                 </div>
                             </div>
@@ -268,6 +305,11 @@ async function initChainConnection(addr) {
         })
             .then(async res => {
                 await res.json().then(async res => {
+                    // start the heartbeat
+                    setInterval(() => {
+                        heartbeat();
+                    }, 30000);
+
                     // if nonce is still present, sign user in automatically
                     if (getSessionNonce())
                         await queryServerToSignIn(getSessionNonce(), false);      // roll up the card
@@ -339,6 +381,8 @@ document.body.addEventListener(
 
                 attrElement.parentElement.removeChild(attrElement);
             } else if (e.classList.contains("reg-property-before")) {
+                if (!is_connected()) return;
+
                 let title = qs(".doc-title-field").value;
                 if (!qs(".doc-title-field").value) {
                     toast(`❌ Please specify the title of the document.`)
@@ -384,6 +428,8 @@ document.body.addEventListener(
                     toast(`❌ You need to specify more attributes.`);
                 }
             } else if (e.classList.contains("gen-mnemonics-before")) {
+                if (!is_connected()) return;
+
                 const name = qs(".pseudo-name").value;
                 if (name) {
                     hide(".gen-mnemonics-before");
@@ -440,6 +486,7 @@ document.body.addEventListener(
                     queryServerToSignIn(seed, true);
                 }
             } else if (e.classList.contains("submit-filled-document-before")) {
+                if (!is_connected()) return;
                 if (userIsAuth()) {
                     let allFilled = true;
                     qsa(".form-document-properties").forEach(e => {
@@ -527,6 +574,7 @@ document.body.addEventListener(
                 }
             } else if (e.classList.contains("load-property-details")) {
                 // load property details from IPFS
+                if (!is_connected()) return;
                 e.innerText = "loading...";
                 fetch("/doc-details", {
                     method: 'post',
@@ -553,6 +601,7 @@ document.body.addEventListener(
                         ;
                     })
             } else if (e.classList.contains("transfer-property-btn-before")) {
+                if (!is_connected()) return;
                 if (userIsAuth()) {
                     let recipient = qs(".recipient-addr");
                     let psize = qs(".trans-property-size");
@@ -619,6 +668,7 @@ document.body.addEventListener(
                     }
                 }
             } else if (e.classList.contains("search-pdoc-btn-before")) {
+                if (!is_connected()) return;
                 let propertID = qs(".input-for-signature").value;
                 if (propertID) {
                     hide(".search-pdoc-btn-before");
@@ -672,6 +722,7 @@ document.body.addEventListener(
                     toast(`❌ please fill in a valid property ID.`);
                 }
             } else if (e.classList.contains("sign-document-btn-before")) {
+                if (!is_connected()) return;
                 hide(".sign-document-btn-before");
                 appear(".sign-document-btn-after");
                 qs(".search-pdoc-btn-before").disabled = true;
@@ -710,6 +761,7 @@ document.body.addEventListener(
                         ;
                     })
             } else if (e.classList.contains("make-enquiry-btn-before")) {
+                if (!is_connected()) return;
                 let propertID = qs(".pid-for-enquiry").value;
                 if (propertID) {
                     hide(".make-enquiry-btn-before");
@@ -773,6 +825,7 @@ document.body.addEventListener(
                     toast(`❌ please fill in a valid property ID.`);
                 }
             } else if (e.classList.contains("transfer-search-btn-before")) {
+                if (!is_connected()) return;
                 let propertID = qs(".input-for-transfer").value;
                 if (propertID) {
                     hide(".transfer-search-btn-before");
@@ -835,6 +888,9 @@ document.body.addEventListener(
                 } else {
                     toast(`❌ please fill in a valid property ID.`);
                 }
+            } else if (e.classList.contains("copy")) {
+                navigator.clipboard.writeText(qs(`.${e.dataset.class}`).innerText);
+                toast("Copied to clipboard");
             }
         } else {
             toast(`waiting to connect to the <code>Property Oracle</code> and <code>KILT</code> chain.`);

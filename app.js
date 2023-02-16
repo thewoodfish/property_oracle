@@ -89,6 +89,10 @@ app.post('/connect-chains', (req, res) => {
     })();
 });
 
+app.get('/heartbeat', (req, res) => {
+    checkConnection(res);
+});
+
 app.post('/gen-keys', (req, res) => {
     createNewUser(req.body, res);
 });
@@ -132,6 +136,12 @@ app.post('/sign-claim', (req, res) => {
 app.post('/enquire', (req, res) => {
     enquirePropertyClaim(req.body, res);
 });
+
+// check if chain is still connected
+async function checkConnection(res) {
+    const now = await api.query.timestamp.now();
+    res.send({ now });
+}
 
 // retreive important information to decide the validity of an individuals claim to a property
 async function enquirePropertyClaim(req, res) {
@@ -229,13 +239,17 @@ async function signPropertyClaim(req, res) {
                     let success = true;
 
                     // only registrar can create a KILT attestation because it is only allowed once
+
+                    // RULE X
+                    // if you're using bob, bob will searve as a witness not the registrar
+                    // use alice if you want to attest it(as per being the right authority) and query kilt
                     if (doc.registrar == /* user.keyPair.address */ alice.address)
                         success = await kilt.createAttestation(user.did, user.fullDid.mnemonic, claim);
 
                     if (success) {
                         // save signoatory onchain
                         const transfer = api.tx.oracle.attestClaim(pkey, cid, doc.registrar == /*user.keyPair.address*/ alice.address);
-                        const _ = await transfer.signAndSend(/* user.keyPair */alice, ({ events = [], status }) => {
+                        const _ = await transfer.signAndSend(/* user.keyPair */alice /* RULE X applies here too */, ({ events = [], status }) => {
                             if (status.isInBlock) {
                                 events.forEach(({ event: { data, method, section }, phase }) => {
                                     // check for errors
