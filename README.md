@@ -10,7 +10,7 @@ With Property Oracle, nobody can take what is yours and leave you with nothing.
 - Users can then fill the document and submit it. This filled document is accessible to the user and authority.
 - Signatures: People can append their signatures to the document as witnesses, confirming a users ownership of the property. But the property document and its information is only considered true and valid when the authority signs it. Probably after their proper investigation.
 - The signatures are recorded on the blockchain and timestamped, thereby cementing an individuals claim to the property, from now to eternity. 
-- Properties can be transferred from one individual to the other, e.g from father to son.
+- Properties can be transferred from one individual to the other, e.g from father to son in a secure, transparent and immutable fashion.
 - All these interactions are recorded on the blockchain for transparency and security.
 
 ## Notable Property Oracle Operations
