@@ -34,7 +34,7 @@ With Property Oracle, nobody can take what is yours and leave you with nothing.
 
 ## How to run or test Property Oracle
 - Install `npm` and `nodeJS` on your computer.
-- Clone the this(Property Oracle) repo.
+- Clone this(Property Oracle) repo.
 - Set up Property oracle chain and get it running. Directions are given here -> https://github.com/thewoodfish/property-oracle-node#running-a-local-node
 - Run `npm install`.
 - After installation of all the necessary packages, run `npm start`.
