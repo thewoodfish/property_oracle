@@ -47,7 +47,7 @@ The code running on a Property Oracle node can be found here at -> https://githu
 There a few improvements being considered for property oracle going forward.
 - Pinning the necessary files e.i credentials, DID documents etc on storage layers especially the CRUST network.
 - Implementing a multisignature attestation mechanism using substrate FRAMEs <a href="https://paritytech.github.io/substrate/master/pallet_multisig/index.html">Multisig Pallet</a>.
-- Tokenization of property, by introducing a property oracle native token. Substrate FRAMEs <a href="https://paritytech.github.io/substrate/master/pallet_assets/index.html">Assets Pallet</a> would help greatly with this 😅.
+- Tokenization of property, by introducing a property oracle native token. Substrate FRAMEs <a href="https://paritytech.github.io/substrate/master/pallet_assets/index.html">Assets Pallet</a> would help greatly with this 😁.
 - Most importantly, governance. This can be tricky because various regions are governed by various laws and have various biases. More on that soon...
 - etc.
 
