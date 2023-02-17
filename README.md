@@ -43,6 +43,15 @@ With Property Oracle, nobody can take what is yours and leave you with nothing.
 ### Blockchain Node
 The code running on a Property Oracle node can be found here at -> https://github.com/thewoodfish/property-oracle-node
 
+## Going forward
+There a few improvements being considered for property oracle going forward.
+- Pinning the necessary files e.i credentials, DID documents etc on storage layers especially the CRUST network.
+- Implementing a multisignature attestation mechanism using substrate FRAMEs <a href="https://paritytech.github.io/substrate/master/pallet_multisig/index.html">Multisig Pallet</a>.
+- Tokenization of property, by introducing a property oracle native token.
+- Most importantly, governance. This can be tricky because various regions are governed by various laws and have various biases. More on that soon...
+- etc.
+
+
 ### Final
 So all in all, even though your physical documents can be duplicated or falsified by scammers, once you fill your document using property oracle and get the right authority to sign it, 😁 YOU MY FRIEND, ARE VERY SAFE, FOREVER!
 
